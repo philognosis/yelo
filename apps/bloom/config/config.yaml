@@ -1,0 +1,528 @@
+# Bloom Configuration File
+#
+# Configuration for the Bloom AI-powered performance evaluation system
+# with multi-agent orchestration
+
+# ============================================================================
+# Database Settings
+# ============================================================================
+database:
+  # Document store (MongoDB-compatible)
+  document_store:
+    type: "mongodb"
+    host: "localhost"
+    port: 27017
+    database: "bloom"
+    collections:
+      - "evaluations"
+      - "employees"
+      - "feedback"
+      - "metrics"
+
+    # Connection pool
+    min_pool_size: 10
+    max_pool_size: 100
+
+    # Indexes (created on startup)
+    indexes:
+      evaluations:
+        - field: "employee_id"
+          unique: false
+        - field: "manager_id"
+          unique: false
+        - field: "cycle_name"
+          unique: false
+        - field: "current_state"
+          unique: false
+        - field: "created_at"
+          unique: false
+      employees:
+        - field: "email"
+          unique: true
+        - field: "manager_id"
+          unique: false
+
+  # Vector store (for RAG embeddings)
+  vector_store:
+    type: "qdrant"
+    host: "localhost"
+    port: 6333
+    collection_name: "bloom_embeddings"
+    embedding_dim: 384
+    distance_metric: "cosine"
+
+  # Graph store (for org relationships)
+  graph_store:
+    type: "neo4j"
+    uri: "bolt://localhost:7687"
+    username: "neo4j"
+    password: "bloom-graph-password"
+    database: "bloom"
+
+  # Time-series store (for metrics)
+  timeseries_store:
+    type: "influxdb"
+    url: "http://localhost:8086"
+    token: "bloom-timeseries-token"
+    org: "bloom"
+    bucket: "evaluations"
+
+# ============================================================================
+# Agent Configuration
+# ============================================================================
+agents:
+  # Watchkeeper - Orchestration & monitoring
+  watchkeeper:
+    count: 1
+    enabled: true
+    config:
+      monitoring_interval_seconds: 60
+      health_check_interval_seconds: 300
+      auto_recovery: true
+
+  # Context Miner - Employee context & peer suggestions
+  context_miner:
+    count: 1
+    enabled: true
+    config:
+      min_relationship_strength: 0.5
+      max_peer_suggestions: 10
+      default_peer_count: 5
+      use_ml_ranking: true
+
+  # Scribe - AI synthesis & drafts
+  scribe:
+    count: 2
+    enabled: true
+    config:
+      model: "claude-sonnet-4-5"
+      temperature: 0.3
+      max_tokens: 4000
+      enable_rag: true
+      enable_voice_synthesis: true
+      synthesis_quality: "high"
+
+  # Chaser - Deadline enforcement & notifications
+  chaser:
+    count: 1
+    enabled: true
+    config:
+      check_interval_minutes: 60
+      reminder_schedule:
+        # Days before deadline to send reminders
+        - 7  # One week before
+        - 3  # Three days before
+        - 1  # One day before
+        - 0  # On deadline day
+      escalation_enabled: true
+      escalation_delay_days: 2
+
+  # Gatekeeper - Security & RBAC
+  gatekeeper:
+    count: 1
+    enabled: true
+    config:
+      enable_rbac: true
+      enable_audit_log: true
+      sensitive_fields:
+        - "raw_input"
+        - "manager_responses"
+        - "calibration_notes"
+
+  # Analyst - Metrics & calibration
+  analyst:
+    count: 1
+    enabled: true
+    config:
+      enable_bias_detection: true
+      enable_trend_analysis: true
+      calibration_thresholds:
+        exceptional: 0.05  # Top 5%
+        exceeds: 0.20      # Top 20%
+        meets: 0.60        # 60%
+        developing: 0.10   # 10%
+        not_meeting: 0.05  # Bottom 5%
+
+# ============================================================================
+# Workflow Configuration
+# ============================================================================
+workflow:
+  # Deadline defaults (in days from cycle start)
+  deadlines:
+    peer_selection: 7          # 1 week for peer selection
+    peer_feedback: 21          # 3 weeks for peer feedback (includes selection time)
+    self_evaluation: 21        # 3 weeks for self-eval (parallel with peer feedback)
+    manager_evaluation: 42     # 6 weeks for manager evaluation
+    calibration: 49            # 7 weeks for calibration
+    release: 56                # 8 weeks for release
+
+  # Evaluation phases
+  phases:
+    - name: "context_peer_selection"
+      duration_days: 7
+      auto_advance: true
+
+    - name: "data_gathering"
+      duration_days: 14
+      auto_advance: false  # Wait for all feedback
+
+    - name: "manager_evaluation"
+      duration_days: 21
+      auto_advance: false  # Manager must complete
+
+    - name: "calibration"
+      duration_days: 7
+      auto_advance: true
+
+    - name: "release_discussion"
+      duration_days: 7
+      auto_advance: false  # Employee must acknowledge
+
+  # Peer feedback requirements
+  peer_feedback:
+    min_peers: 3
+    max_peers: 7
+    recommended_peers: 5
+    allow_employee_selection: true
+    require_manager_approval: true
+    anonymous_to_employee: true
+
+  # AI draft generation
+  ai_draft:
+    auto_generate: true
+    require_minimum_feedback: 3
+    include_evidence_map: true
+    generate_clarifying_questions: true
+    max_questions: 5
+
+# ============================================================================
+# Notification Settings
+# ============================================================================
+notifications:
+  # Enabled channels
+  enabled_channels:
+    - "email"
+    - "slack"
+    - "in_app"
+
+  # Email configuration
+  email:
+    enabled: true
+    smtp_host: "smtp.gmail.com"
+    smtp_port: 587
+    smtp_user: "bloom@company.com"
+    smtp_password: "${EMAIL_PASSWORD}"  # Environment variable
+    from_address: "Bloom Evaluations <bloom@company.com>"
+    templates_dir: "./templates/email"
+
+  # Slack configuration
+  slack:
+    enabled: true
+    bot_token: "${SLACK_BOT_TOKEN}"  # Environment variable
+    signing_secret: "${SLACK_SIGNING_SECRET}"
+    default_channel: "#evaluations"
+    templates_dir: "./templates/slack"
+    enable_interactive_components: true
+
+  # In-app notifications
+  in_app:
+    enabled: true
+    retention_days: 90
+    enable_websocket: true
+
+  # Notification types
+  types:
+    # Phase transitions
+    phase_started:
+      channels: ["email", "in_app"]
+      priority: "normal"
+
+    # Deadline reminders
+    deadline_reminder:
+      channels: ["email", "slack", "in_app"]
+      priority: "high"
+
+    # Overdue notifications
+    deadline_overdue:
+      channels: ["email", "slack", "in_app"]
+      priority: "urgent"
+
+    # Feedback submissions
+    feedback_received:
+      channels: ["in_app"]
+      priority: "low"
+
+    # AI draft ready
+    draft_generated:
+      channels: ["email", "in_app"]
+      priority: "normal"
+
+    # Calibration changes
+    calibration_change:
+      channels: ["email"]
+      priority: "high"
+
+    # Release notifications
+    evaluation_released:
+      channels: ["email", "slack", "in_app"]
+      priority: "high"
+
+# ============================================================================
+# Integration Settings
+# ============================================================================
+integrations:
+  # Calendar integration (Google Calendar, Office 365)
+  calendar:
+    enabled: true
+    provider: "google"  # or "office365"
+    credentials_path: "./credentials/calendar_credentials.json"
+    sync_interval_hours: 24
+    lookback_years: 2
+
+  # Git integration (GitHub, GitLab, Bitbucket)
+  git:
+    enabled: true
+    providers:
+      - type: "github"
+        token: "${GITHUB_TOKEN}"
+        organizations: ["your-org"]
+      - type: "gitlab"
+        token: "${GITLAB_TOKEN}"
+        groups: ["your-group"]
+    sync_interval_hours: 6
+    include_metrics:
+      - "commits"
+      - "pull_requests"
+      - "code_reviews"
+      - "issues"
+
+  # JIRA integration
+  jira:
+    enabled: true
+    url: "https://your-company.atlassian.net"
+    username: "${JIRA_USERNAME}"
+    api_token: "${JIRA_API_TOKEN}"
+    sync_interval_hours: 12
+    include_metrics:
+      - "tickets_created"
+      - "tickets_resolved"
+      - "sprint_velocity"
+      - "story_points"
+
+  # HRIS integration (Workday, BambooHR, etc.)
+  hris:
+    enabled: true
+    provider: "workday"  # or "bamboohr", "namely", etc.
+    api_url: "${HRIS_API_URL}"
+    api_key: "${HRIS_API_KEY}"
+    sync_interval_hours: 24
+    sync_fields:
+      - "employee_info"
+      - "org_structure"
+      - "skills"
+      - "certifications"
+      - "trainings"
+
+# ============================================================================
+# Security Settings
+# ============================================================================
+security:
+  # JWT configuration
+  jwt:
+    secret_key: "${JWT_SECRET_KEY}"  # Environment variable
+    algorithm: "HS256"
+    access_token_expire_minutes: 1440  # 24 hours
+    refresh_token_expire_days: 30
+
+  # RBAC settings
+  rbac:
+    enabled: true
+    roles:
+      - employee
+      - manager
+      - hr_admin
+      - system_admin
+
+    # Permission matrix
+    permissions:
+      employee:
+        - "read_own_evaluation"
+        - "submit_self_evaluation"
+        - "select_peers"
+        - "submit_peer_feedback"
+
+      manager:
+        - "read_team_evaluations"
+        - "approve_peers"
+        - "submit_manager_evaluation"
+        - "view_ai_draft"
+
+      hr_admin:
+        - "read_all_evaluations"
+        - "create_evaluation"
+        - "start_cycle"
+        - "view_metrics"
+        - "export_data"
+
+      system_admin:
+        - "*"  # All permissions
+
+  # Audit logging
+  audit:
+    enabled: true
+    log_all_requests: true
+    log_sensitive_operations: true
+    retention_days: 365
+
+  # Data encryption
+  encryption:
+    enabled: true
+    algorithm: "AES-256-GCM"
+    key_rotation_days: 90
+    encrypt_at_rest: true
+    encrypt_in_transit: true
+
+# ============================================================================
+# Performance & Scaling
+# ============================================================================
+performance:
+  # Concurrency limits
+  max_concurrent_evaluations: 100
+  max_concurrent_ai_requests: 10
+  max_concurrent_notifications: 50
+
+  # Rate limiting
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 100
+    requests_per_hour: 1000
+
+  # Caching
+  cache:
+    enabled: true
+    type: "redis"
+    host: "localhost"
+    port: 6379
+    ttl_seconds: 3600
+    cache_policies:
+      employee_data: 3600      # 1 hour
+      evaluation_data: 300     # 5 minutes
+      metrics_data: 600        # 10 minutes
+      ai_responses: 86400      # 24 hours
+
+  # Background tasks
+  background_tasks:
+    max_workers: 10
+    queue_type: "celery"
+    broker_url: "redis://localhost:6379/0"
+    result_backend: "redis://localhost:6379/1"
+
+# ============================================================================
+# Monitoring & Observability
+# ============================================================================
+monitoring:
+  # Logging
+  logging:
+    level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+    format: "json"
+    output: "stdout"
+    enable_file_logging: true
+    log_file: "./logs/bloom.log"
+    max_file_size_mb: 100
+    backup_count: 10
+
+  # Metrics
+  metrics:
+    enabled: true
+    export_format: "prometheus"
+    export_port: 9090
+    collect_interval_seconds: 60
+
+    # Tracked metrics
+    tracked_metrics:
+      - "evaluation_creation_rate"
+      - "feedback_submission_rate"
+      - "ai_draft_generation_time"
+      - "api_response_time"
+      - "agent_workload"
+      - "database_query_time"
+      - "notification_delivery_rate"
+
+  # Health checks
+  health_checks:
+    enabled: true
+    interval_seconds: 60
+    checks:
+      - "database_connectivity"
+      - "agent_status"
+      - "external_integrations"
+      - "background_tasks"
+
+  # Alerting
+  alerting:
+    enabled: true
+    alert_manager_url: "http://localhost:9093"
+    rules:
+      - name: "high_error_rate"
+        condition: "error_rate > 0.05"
+        severity: "critical"
+
+      - name: "slow_ai_response"
+        condition: "ai_response_time_p95 > 30s"
+        severity: "warning"
+
+      - name: "agent_down"
+        condition: "agent_status == 'down'"
+        severity: "critical"
+
+# ============================================================================
+# Feature Flags
+# ============================================================================
+features:
+  # AI features
+  enable_rag: true
+  enable_voice_synthesis: true
+  enable_ai_questions: true
+  enable_bias_detection: true
+
+  # Autonomous mode
+  enable_autonomous_mode: true
+  autonomy_level: "autonomous"  # supervised, semi_autonomous, autonomous
+  confidence_threshold: 0.7
+
+  # Beta features
+  enable_calibration_ai: false
+  enable_predictive_analytics: false
+  enable_skill_gap_analysis: false
+
+  # Experimental features
+  enable_multi_language: false
+  enable_video_feedback: false
+  enable_360_feedback: false
+
+# ============================================================================
+# Development Settings
+# ============================================================================
+development:
+  # Mock data
+  use_mock_data: false
+  seed_database: false
+
+  # Debug mode
+  debug: false
+  enable_profiling: false
+
+  # API documentation
+  enable_api_docs: true
+  docs_url: "/docs"
+  redoc_url: "/redoc"
+
+  # CORS (for web dashboard)
+  cors:
+    enabled: true
+    allow_origins:
+      - "http://localhost:3000"
+      - "http://localhost:8080"
+    allow_credentials: true
+    allow_methods: ["*"]
+    allow_headers: ["*"]
