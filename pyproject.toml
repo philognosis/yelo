@@ -1,0 +1,130 @@
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "iras"
+version = "0.1.0"
+description = "Intelligent Research & Analysis Swarm - A production-ready multi-agent AI system"
+authors = [
+    {name = "IRAS Team"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    # LLM and AI
+    "anthropic>=0.18.0",
+    "openai>=1.10.0",
+    "tiktoken>=0.5.0",
+
+    # Vector databases
+    "chromadb>=0.4.22",
+    "sentence-transformers>=2.3.0",
+    "faiss-cpu>=1.7.4",
+
+    # Graph database
+    "networkx>=3.2",
+    "neo4j>=5.16.0",
+
+    # Time-series database
+    "influxdb-client>=1.39.0",
+
+    # Document store
+    "pymongo>=4.6.0",
+    "tinydb>=4.8.0",
+
+    # Data processing
+    "numpy>=1.26.0",
+    "pandas>=2.1.0",
+    "scipy>=1.11.0",
+
+    # Async and concurrency
+    "aiohttp>=3.9.0",
+    "asyncio>=3.4.3",
+
+    # Utilities
+    "pydantic>=2.5.0",
+    "python-dotenv>=1.0.0",
+    "rich>=13.7.0",
+    "loguru>=0.7.2",
+    "tenacity>=8.2.3",
+
+    # HTTP and web
+    "httpx>=0.26.0",
+    "beautifulsoup4>=4.12.0",
+
+    # Testing utilities (runtime for examples)
+    "faker>=22.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "black>=23.12.0",
+    "ruff>=0.1.9",
+    "mypy>=1.8.0",
+    "pre-commit>=3.6.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311', 'py312']
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = "-v --cov=src/iras --cov-report=html --cov-report=term"
+
+[tool.coverage.run]
+source = ["src/iras"]
+omit = ["*/tests/*", "*/test_*.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
