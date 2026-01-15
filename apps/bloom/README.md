@@ -1,21 +1,28 @@
-# Bloom - Employee Evaluation & Growth Engine
+# 🌸 Bloom - Employee Evaluation & Growth Engine
 
-**Version:** 0.1.0
+**Version:** 1.0.0
 **Built on:** IRAS (Intelligent Research & Analysis Swarm) Framework
 
-Bloom is a zero-UI, autonomous multi-agent system for performance evaluations that leverages AI to streamline and enhance the entire evaluation process.
+Bloom is an AI-powered, multi-agent autonomous system for employee performance evaluations that combines zero-UI philosophy with modern dashboards to streamline and enhance the entire evaluation process.
 
-## Table of Contents
+---
+
+## 📋 Table of Contents
 
 - [Overview](#overview)
 - [Key Features](#key-features)
 - [Architecture](#architecture)
 - [Quick Start](#quick-start)
-- [Installation](#installation)
+  - [Docker Deployment (Recommended)](#docker-deployment-recommended)
+  - [Manual Installation](#manual-installation)
 - [Usage Examples](#usage-examples)
 - [Agent Descriptions](#agent-descriptions)
 - [Workflow Phases](#workflow-phases)
 - [Configuration](#configuration)
+- [Production Deployment](#production-deployment)
+- [API & Dashboard](#api--dashboard)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
 - [Documentation Links](#documentation-links)
 
 ## Overview
@@ -112,101 +119,294 @@ Bloom automates 80% of this work while maintaining transparency and human oversi
 4. **Data Layer**: Multiple database types for different data patterns
 5. **Integration Layer**: External system connectors (Slack, Jira, Git, Calendar)
 
-## Quick Start
+## 🚀 Quick Start
 
-### Prerequisites
+### Docker Deployment (Recommended)
 
-- Python 3.9+
-- PostgreSQL (for DocumentStore)
-- Redis (for caching)
-- API keys for: Slack, Email provider, Calendar service
-
-### Basic Setup
-
-```python
-from bloom import BloomOrchestrator, BloomConfig
-from bloom.models import Employee, Person
-import asyncio
-
-async def main():
-    # Configure Bloom
-    config = BloomConfig(
-        num_scribes=2,
-        num_context_miners=1,
-        enable_autonomous_mode=True,
-        enable_rag=True,
-        slack_enabled=True,
-        email_enabled=True,
-    )
-
-    # Initialize orchestrator
-    orchestrator = BloomOrchestrator(config)
-    await orchestrator.initialize()
-
-    # Start evaluation cycle
-    employees = [
-        # Your employee list
-    ]
-
-    evaluation_ids = await orchestrator.start_evaluation_cycle(
-        cycle_name="Q4 2024",
-        employees=employees,
-    )
-
-    print(f"Started {len(evaluation_ids)} evaluations")
-
-    # Monitor system health
-    status = await orchestrator.get_swarm_status()
-    print(f"System health: {status}")
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-## Installation
-
-### From Source
+The fastest way to get Bloom running is with Docker:
 
 ```bash
-# Clone repository
+# 1. Clone the repository
 git clone <repository-url>
 cd apps/bloom
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Set up environment variables
+# 2. Configure environment
 cp .env.example .env
-# Edit .env with your configuration
+# Edit .env with your API keys and configuration
+# At minimum, set: ANTHROPIC_API_KEY or OPENAI_API_KEY
 
-# Initialize databases
-python scripts/init_databases.py
+# 3. Start all services (one command!)
+./start.sh
 
-# Run tests
-pytest tests/
-
-# Start Bloom orchestrator
-python main.py
+# That's it! Bloom is now running.
 ```
 
-### Docker
+**Access Points:**
+- 📊 **Dashboard**: http://localhost:3000
+- 🔌 **API**: http://localhost:8000
+- 📚 **API Docs**: http://localhost:8000/docs
+- 🗄️ **Database Admin**: http://localhost:5432 (PostgreSQL)
+
+**What Gets Deployed:**
+- Bloom API (FastAPI backend)
+- Next.js Dashboard (React frontend)
+- PostgreSQL (document storage)
+- Redis (caching & pub/sub)
+- Qdrant (vector database for RAG)
+
+**Optional Services:**
+```bash
+# Start with all services (Neo4j graph DB + InfluxDB metrics)
+./start.sh --full
+
+# Start with Nginx reverse proxy
+./start.sh --nginx
+
+# Run in foreground (see logs in terminal)
+./start.sh --fg
+```
+
+**Stop Services:**
+```bash
+# Stop all services (preserve data)
+./stop.sh
+
+# Stop and remove all data
+./stop.sh --volumes
+```
+
+---
+
+### Manual Installation
+
+If you prefer to run without Docker:
+
+#### Prerequisites
+
+- **Python 3.10+** (3.11 recommended)
+- **Node.js 20+** (for dashboard)
+- **PostgreSQL 15+**
+- **Redis 7+**
+- **Qdrant** (optional, for production RAG)
+
+#### Backend Setup
 
 ```bash
-# Build image
-docker build -t bloom:latest .
+# 1. Navigate to Bloom directory
+cd apps/bloom
 
-# Run container
-docker-compose up -d
+# 2. Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Check logs
-docker-compose logs -f bloom
+# 3. Install IRAS core (required dependency)
+pip install -e ../../src/iras
+
+# 4. Install Bloom dependencies
+pip install -r requirements.txt
+
+# 5. Install Bloom as package
+pip install -e .
+
+# 6. Configure environment
+cp .env.example .env
+# Edit .env with your settings
+
+# 7. Initialize databases
+python -c "
+from bloom.orchestrator import BloomOrchestrator, BloomConfig
+import asyncio
+
+async def init():
+    config = BloomConfig()
+    orch = BloomOrchestrator(config)
+    await orch.initialize()
+    print('✓ Databases initialized')
+
+asyncio.run(init())
+"
+
+# 8. Run tests to verify installation
+pytest tests/ -v
+
+# 9. Start API server
+uvicorn bloom.api.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
+#### Dashboard Setup
 
-## Usage Examples
+```bash
+# 1. Navigate to dashboard directory
+cd dashboard
 
-### Example 1: Process Peer Selection
+# 2. Install dependencies
+npm install
+
+# 3. Configure environment
+cp .env.example .env.local
+# Set NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# 4. Run development server
+npm run dev
+
+# Dashboard will be available at http://localhost:3000
+```
+
+---
+
+### Quick Example: Run a Simple Evaluation
+
+Once Bloom is running, try this example:
+
+```bash
+# Run the simple evaluation example
+cd apps/bloom
+python examples/simple_evaluation.py
+```
+
+This will:
+1. Create a test employee
+2. Start an evaluation cycle
+3. Generate AI peer suggestions
+4. Simulate peer feedback submissions
+5. Create self-evaluation
+6. Generate AI manager draft
+7. Complete manager evaluation
+
+**Expected Output:**
+```
+=== Simple Evaluation Workflow Example ===
+[Step 1] Initializing Bloom orchestrator...
+✓ Orchestrator initialized successfully
+[Step 2] Creating employee record...
+✓ Created employee: Jane Doe (jane.doe@company.com)
+[Step 3] Starting evaluation cycle...
+✓ Evaluation created: <evaluation-id>
+...
+[Step 10] Final evaluation summary...
+Evaluation Complete!
+  Overall rating: exceeds
+  Promotion: ready_next_cycle
+```
+
+For more examples, see the [Usage Examples](#usage-examples) section below.
+
+## 💡 Usage Examples
+
+Bloom provides multiple example workflows demonstrating different use cases.
+
+### Example 1: Simple Evaluation Workflow
+
+The simplest way to see Bloom in action:
+
+```bash
+python examples/simple_evaluation.py
+```
+
+This demonstrates a complete evaluation workflow for a single employee, including:
+- Creating employee records
+- Generating AI peer suggestions
+- Submitting peer feedback
+- Creating self-evaluations
+- Generating AI manager drafts
+- Completing manager evaluations
+
+**Code snippet:**
+```python
+from bloom.orchestrator import BloomOrchestrator, BloomConfig
+from bloom.models import Employee, Person, EmployeeLevel, EmployeeRole
+
+# Initialize Bloom
+config = BloomConfig(
+    num_scribes=1,
+    num_context_miners=1,
+    enable_autonomous_mode=False,  # Manual control for demo
+    enable_rag=True,
+)
+
+orchestrator = BloomOrchestrator(config)
+await orchestrator.initialize()
+
+# Create employee
+employee = Employee(
+    person=Person(
+        name="Jane Doe",
+        email="jane.doe@company.com",
+        title="Senior Software Engineer",
+        level=EmployeeLevel.L3,
+        role=EmployeeRole.INDIVIDUAL_CONTRIBUTOR,
+    )
+)
+
+# Start evaluation cycle
+evaluation_ids = await orchestrator.start_evaluation_cycle(
+    cycle_name="Q4 2024",
+    employees=[employee],
+)
+
+# Process peer selection
+result = await orchestrator.process_peer_selection(
+    evaluation_id=evaluation_ids[0],
+    employee_id=employee.person.id,
+)
+
+# ... continue with workflow
+```
+
+---
+
+### Example 2: Bulk Evaluation Cycle
+
+Process evaluations for a large cohort:
+
+```bash
+python examples/bulk_cycle.py
+```
+
+This demonstrates:
+- Batch evaluation creation
+- Parallel processing with multiple agents
+- Progress monitoring across cohorts
+- Real-time metrics tracking
+
+---
+
+### Example 3: Manager AI Workflow
+
+See how managers interact with AI drafts:
+
+```bash
+python examples/manager_workflow.py
+```
+
+This demonstrates:
+- AI-generated evaluation drafts
+- Evidence-based citations
+- Clarifying questions from AI
+- Manager review and editing process
+- Final submission
+
+---
+
+### Example 4: Dashboard Demo
+
+Run the interactive dashboard:
+
+```bash
+python examples/dashboard_demo.py
+```
+
+Then open http://localhost:3000 to see:
+- Real-time evaluation status
+- Multi-role dashboards (Employee, Manager, HR Admin)
+- Live WebSocket updates
+- Interactive evaluation editing
+
+---
+
+### Programmatic API Examples
+
+#### Process Peer Selection
 
 ```python
 # Generate peer suggestions using ContextMiner
@@ -220,7 +420,7 @@ for peer in result['suggested_peers']:
     print(f"  - {peer['peer_name']}: {peer['justification']}")
 ```
 
-### Example 2: Submit Peer Feedback
+#### Submit Peer Feedback
 
 ```python
 # Submit raw feedback (voice or text)
@@ -234,7 +434,7 @@ feedback = await orchestrator.process_peer_feedback(
 print(f"Synthesized: {feedback.synthesized_feedback}")
 ```
 
-### Example 3: Generate Manager Draft
+#### Generate Manager Draft
 
 ```python
 # Generate AI-assisted evaluation draft
@@ -247,7 +447,7 @@ print(f"Evidence Citations: {len(draft.ai_draft_evidence_map)} claims")
 print(f"Clarifying Questions: {len(draft.ai_questions)}")
 ```
 
-### Example 4: Get Swarm Status
+#### Monitor Swarm Status
 
 ```python
 # Monitor agent health and performance
@@ -454,80 +654,358 @@ BLOOM_SECRET_KEY=your-secret-key
 ENCRYPTION_KEY=your-encryption-key
 ```
 
-## API Documentation
+---
 
-See [API.md](./API.md) for complete API reference including:
-- REST endpoints
-- WebSocket protocol
-- Authentication flow
-- Example requests and responses
+## 🚢 Production Deployment
 
-## Development
+### Using the Deployment Script
 
-See [DEVELOPMENT.md](./DEVELOPMENT.md) for:
-- Project structure
-- Adding new agents
-- Extending workflows
-- Testing guidelines
-- Code style guide
-- Contributing guidelines
+For production deployments, use the provided deployment script:
 
-## Deployment
+```bash
+# Deploy to production
+./deploy.sh
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for:
-- Production deployment guide
-- Docker setup
-- Kubernetes manifests
-- Monitoring and logging
-- Troubleshooting
+# Deploy to staging
+./deploy.sh --env staging
 
-## Architecture Deep Dive
+# Skip tests (not recommended)
+./deploy.sh --skip-tests
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for:
-- System layers and components
-- Agent swarm design patterns
-- Database schema
-- Communication protocols
-- State machine workflow
-- RAG pipeline details
-- Security and RBAC
-- Scalability considerations
+# Skip database backup
+./deploy.sh --skip-backup
+```
 
-## Documentation Links
+**What the deployment script does:**
+1. ✅ Validates environment configuration
+2. ✅ Runs full test suite
+3. ✅ Backs up existing database
+4. ✅ Pulls latest code changes
+5. ✅ Builds fresh Docker images
+6. ✅ Performs zero-downtime deployment
+7. ✅ Runs health checks
+8. ✅ Cleans up old images
 
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Technical architecture and design
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Deployment and operations guide
-- **[API.md](./API.md)** - Complete API documentation
-- **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Developer guide and best practices
+### Production Checklist
 
-## License
+Before deploying to production, ensure:
 
-[Your License Here]
+- [ ] `.env` configured with production values
+- [ ] `JWT_SECRET` set to secure random string (min 32 chars)
+- [ ] Database passwords changed from defaults
+- [ ] LLM API keys configured (Anthropic or OpenAI)
+- [ ] SMTP settings configured for emails
+- [ ] Slack tokens configured (if using Slack integration)
+- [ ] SSL certificates configured (for HTTPS)
+- [ ] Backup strategy implemented
+- [ ] Monitoring and logging configured
 
-## Support
+### Environment Configuration
 
-For questions and support:
-- GitHub Issues: [link]
-- Slack Channel: #bloom-support
-- Email: bloom-support@company.com
+Critical production settings:
 
-## Roadmap
+```bash
+# .env
+BLOOM_ENV=production
+LOG_LEVEL=info
 
-**Q1 2025**:
-- [ ] Advanced RAG with fine-tuned models
-- [ ] Multi-language support
-- [ ] Mobile app integration
+# Security (MUST CHANGE!)
+JWT_SECRET=<64-character-random-string>
+POSTGRES_PASSWORD=<secure-password>
+NEO4J_PASSWORD=<secure-password>
 
-**Q2 2025**:
-- [ ] 360-degree feedback support
-- [ ] Skills gap analysis
-- [ ] Career path recommendations
+# LLM Provider
+ANTHROPIC_API_KEY=sk-ant-xxxxx
+LLM_PROVIDER=anthropic
+LLM_MODEL=claude-3-5-sonnet-20241022
 
-**Q3 2025**:
-- [ ] Integration with learning platforms
-- [ ] Automated goal tracking
-- [ ] Predictive analytics for retention
+# Features
+BLOOM_ENABLE_AUTONOMOUS_MODE=true
+BLOOM_ENABLE_RAG=true
+
+# Integrations
+SLACK_BOT_TOKEN=xoxb-xxxxx
+SMTP_HOST=smtp.gmail.com
+SMTP_USER=bloom@company.com
+```
+
+See `.env.example` for complete configuration options.
 
 ---
 
-Built with ❤️ using the IRAS Multi-Agent Framework
+## 🌐 API & Dashboard
+
+### REST API
+
+The Bloom API provides full programmatic access:
+
+**Base URL:** `http://localhost:8000`
+
+**Key Endpoints:**
+- `POST /api/v1/evaluations/cycles` - Start evaluation cycle
+- `GET /api/v1/evaluations/{id}` - Get evaluation details
+- `POST /api/v1/evaluations/{id}/peers/suggest` - Get peer suggestions
+- `POST /api/v1/feedback/peer` - Submit peer feedback
+- `POST /api/v1/feedback/self` - Submit self-evaluation
+- `POST /api/v1/evaluations/{id}/draft` - Generate manager draft
+- `GET /api/v1/swarm/status` - Get agent swarm status
+
+**Interactive Docs:**
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+### Dashboard
+
+The Next.js dashboard provides role-based interfaces:
+
+**Employee View** (`/employee`)
+- My evaluations
+- Peer selection
+- Self-evaluation form
+- Evaluation results
+
+**Manager View** (`/manager`)
+- Team evaluations
+- AI draft review
+- Evaluation editing
+- Calibration prep
+
+**HR Admin View** (`/hr`)
+- Cycle management
+- Analytics dashboard
+- Cohort scheduling
+- System configuration
+
+**Committee View** (`/committee`)
+- Calibration sessions
+- Rating distribution
+- Declined evaluations review
+
+### WebSocket Real-Time Updates
+
+Connect to WebSocket for live updates:
+
+```typescript
+const ws = new WebSocket('ws://localhost:8000/ws');
+
+ws.onmessage = (event) => {
+  const update = JSON.parse(event.data);
+  console.log('Real-time update:', update);
+};
+```
+
+---
+
+## 🧪 Testing
+
+Bloom includes a comprehensive test suite with 196+ tests.
+
+### Run All Tests
+
+```bash
+# Run all tests
+pytest tests/ -v
+
+# Run with coverage
+pytest tests/ --cov=bloom --cov-report=html
+
+# Run specific test file
+pytest tests/test_agents/test_scribe.py -v
+
+# Run specific test
+pytest tests/test_agents/test_scribe.py::test_scribe_rag_pipeline -v
+```
+
+### Test Categories
+
+**Model Tests** (51 tests)
+- Employee and person models
+- Evaluation workflow models
+- Data validation
+
+**Agent Tests** (71 tests)
+- Watchkeeper orchestration
+- ContextMiner peer selection
+- **Scribe RAG pipeline** (32 tests)
+- Chaser notifications
+- Gatekeeper RBAC
+- Analyst metrics
+
+**Workflow Tests** (25 tests)
+- State machine transitions
+- Phase handlers
+- Deadline management
+
+**API Tests** (24 tests)
+- REST endpoints
+- WebSocket connections
+- Authentication
+
+**Integration Tests** (25 tests)
+- Slack integration
+- Email integration
+- Calendar sync
+
+### Test Fixtures
+
+Comprehensive fixtures available in `tests/conftest.py`:
+- Sample employees and evaluations
+- Mock databases
+- Mock integrations
+- Test configurations
+
+---
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**Issue: API won't start**
+```bash
+# Check logs
+docker-compose logs api
+
+# Verify environment
+docker-compose exec api env | grep -E "(ANTHROPIC|POSTGRES)"
+
+# Restart API
+docker-compose restart api
+```
+
+**Issue: Database connection errors**
+```bash
+# Check PostgreSQL is running
+docker-compose ps postgres
+
+# Test connection
+docker-compose exec postgres psql -U bloom -d bloom -c "SELECT 1;"
+
+# Reset database
+./stop.sh --volumes
+./start.sh
+```
+
+**Issue: Dashboard can't connect to API**
+```bash
+# Verify API is accessible
+curl http://localhost:8000/health
+
+# Check dashboard environment
+docker-compose exec dashboard env | grep NEXT_PUBLIC_API_URL
+
+# Restart dashboard
+docker-compose restart dashboard
+```
+
+**Issue: Out of memory errors**
+```bash
+# Check Docker resources
+docker stats
+
+# Increase Docker memory limit (Docker Desktop)
+# Settings → Resources → Memory → 8GB+
+
+# Reduce agent pool sizes in .env
+BLOOM_NUM_SCRIBES=1
+BLOOM_NUM_CONTEXT_MINERS=1
+```
+
+### Enable Debug Logging
+
+```bash
+# In .env
+LOG_LEVEL=debug
+
+# Restart services
+docker-compose restart
+```
+
+### Health Checks
+
+```bash
+# API health
+curl http://localhost:8000/health
+
+# Dashboard health
+curl http://localhost:3000/api/health
+
+# Database health
+docker-compose exec postgres pg_isready
+
+# Agent swarm status
+curl http://localhost:8000/api/v1/swarm/status
+```
+
+---
+
+## 📚 Documentation
+
+- **[Architecture Overview](../../docs/ARCHITECTURE.md)** - System design and components
+- **[Agent Specifications](./docs/AGENTS.md)** - Detailed agent descriptions
+- **[API Reference](./docs/API.md)** - Complete REST API documentation
+- **[Development Guide](./docs/DEVELOPMENT.md)** - Contributing and extending Bloom
+- **[Deployment Guide](./docs/DEPLOYMENT.md)** - Production deployment details
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+
+---
+
+## 📄 License
+
+MIT License - See [LICENSE](./LICENSE) for details
+
+---
+
+## 💬 Support
+
+For questions and support:
+- **GitHub Issues**: [Create an issue](../../issues)
+- **Documentation**: [Bloom Docs](./docs/)
+- **Email**: bloom-support@company.com
+
+---
+
+## 🗺️ Roadmap
+
+### Version 1.1 (Q1 2025)
+- [ ] Advanced RAG with fine-tuned embeddings
+- [ ] Multi-language support (Spanish, French, German)
+- [ ] Mobile app (iOS/Android)
+- [ ] Slack App Directory submission
+
+### Version 1.2 (Q2 2025)
+- [ ] 360-degree feedback support
+- [ ] Skills gap analysis and recommendations
+- [ ] Career path planning
+- [ ] Integration with LinkedIn Learning
+
+### Version 2.0 (Q3 2025)
+- [ ] Automated goal tracking from Jira/GitHub
+- [ ] Predictive analytics for retention risk
+- [ ] Advanced calibration algorithms
+- [ ] Custom evaluation templates
+
+---
+
+## 🙏 Acknowledgments
+
+Built with:
+- **[IRAS Framework](../../src/iras/)** - Multi-agent AI system foundation
+- **[Anthropic Claude](https://anthropic.com)** - LLM for AI synthesis
+- **[FastAPI](https://fastapi.tiangolo.com)** - Modern Python web framework
+- **[Next.js](https://nextjs.org)** - React framework for dashboards
+- **[Pydantic](https://pydantic.dev)** - Data validation
+
+---
+
+<p align="center">
+  Built with ❤️ using the IRAS Multi-Agent Framework
+</p>
+
+<p align="center">
+  <strong>Bloom</strong> - Making performance evaluations delightful 🌸
+</p>
