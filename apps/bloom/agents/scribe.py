@@ -552,25 +552,41 @@ class Scribe(Agent):
         return cleaned.strip()
 
     async def _extract_themes(self, text: str) -> List[str]:
-        """Extract key themes from text (simplified)"""
-        # In production, use LLM or NLP to extract themes
-        # For now, return simulated themes
-        themes = []
+        """Extract key themes from text using LLM"""
+        prompt = f"""Analyze the following performance feedback and extract 3-5 key themes.
 
-        # Pattern matching for common themes
-        if "technical" in text.lower() or "code" in text.lower():
-            themes.append("technical_excellence")
+Feedback text:
+{text}
 
-        if "lead" in text.lower() or "mentor" in text.lower():
-            themes.append("leadership")
+Extract specific, actionable themes such as "technical_excellence", "leadership", "communication", "collaboration", "problem_solving", "innovation", etc.
 
-        if "communication" in text.lower() or "collaborate" in text.lower():
-            themes.append("collaboration")
+Return ONLY a comma-separated list of theme keywords, nothing else."""
 
-        if "innovation" in text.lower() or "creative" in text.lower():
-            themes.append("innovation")
+        try:
+            response = await self.llm.generate(
+                prompt=prompt,
+                system="You are an expert at analyzing employee performance feedback.",
+                temperature=0.3,  # More deterministic for theme extraction
+            )
 
-        return themes or ["general_performance"]
+            # Parse themes from response
+            themes_text = response.content.strip()
+            themes = [theme.strip() for theme in themes_text.split(",")]
+            themes = [t.lower().replace(" ", "_") for t in themes if t.strip()]
+
+            return themes[:5] if themes else ["general_performance"]
+
+        except Exception as e:
+            logger.warning(f"LLM theme extraction failed: {e}, using fallback")
+            # Fallback to pattern matching
+            themes = []
+            if "technical" in text.lower() or "code" in text.lower():
+                themes.append("technical_excellence")
+            if "lead" in text.lower() or "mentor" in text.lower():
+                themes.append("leadership")
+            if "communication" in text.lower() or "collaborate" in text.lower():
+                themes.append("collaboration")
+            return themes or ["general_performance"]
 
     async def _generate_professional_narrative(
         self,
@@ -578,10 +594,34 @@ class Scribe(Agent):
         themes: List[str],
         context_type: str,
     ) -> str:
-        """Generate professional narrative from informal text"""
-        # In production, use LLM to generate
-        # For now, return enhanced version
-        return f"Demonstrated strong capabilities in {', '.join(themes)}. {text}"
+        """Generate professional narrative from informal text using LLM"""
+        prompt = f"""Transform this informal {context_type} feedback into a professional, concise narrative.
+
+Key themes identified: {', '.join(themes)}
+
+Informal feedback:
+{text}
+
+Write a professional 2-3 sentence summary that:
+1. Uses professional language
+2. Incorporates the key themes naturally
+3. Maintains the original intent and specifics
+4. Sounds constructive and clear
+
+Return ONLY the professional narrative, no preamble."""
+
+        try:
+            response = await self.llm.generate(
+                prompt=prompt,
+                system="You are an expert at writing professional employee evaluations.",
+                temperature=0.7,
+            )
+
+            return response.content.strip()
+
+        except Exception as e:
+            logger.warning(f"LLM narrative generation failed: {e}, using fallback")
+            return f"Demonstrated strong capabilities in {', '.join(themes)}. {text}"
 
     def _cluster_themes(self, themes: List[str]) -> Dict[str, List[str]]:
         """Cluster similar themes together"""
@@ -612,18 +652,49 @@ class Scribe(Agent):
         themes: List[str],
         evidence_map: EvidenceMapping,
     ) -> str:
-        """Generate evaluation section with evidence"""
-        # In production, use LLM to generate
-        section = f"{title}: "
-        section += f"Demonstrated strength in {', '.join(themes)}. "
-
-        # Add evidence citations
-        for theme in themes[:2]:  # Top 2 themes
+        """Generate evaluation section with evidence using LLM"""
+        # Build evidence context
+        evidence_text = ""
+        for theme in themes:
             citations = evidence_map.get_citations(theme)
             if citations:
-                section += f"[Supported by: {len(citations)} peer feedback(s)] "
+                evidence_text += f"\n{theme}: {len(citations)} supporting evidence(s)"
+                for citation in citations[:2]:  # Top 2 citations per theme
+                    evidence_text += f"\n  - {citation[:150]}..."
 
-        return section
+        prompt = f"""Write a professional evaluation section for "{title}".
+
+Key themes to address:
+{', '.join(themes)}
+
+Supporting evidence:
+{evidence_text}
+
+Write 2-3 paragraphs that:
+1. Synthesize the themes with specific evidence
+2. Use professional, constructive language
+3. Include concrete examples from the evidence
+4. Maintain a balanced, objective tone
+
+Return ONLY the section text, no title or preamble."""
+
+        try:
+            response = await self.llm.generate(
+                prompt=prompt,
+                system="You are an expert at writing employee performance evaluations with evidence-based assessments.",
+                temperature=0.7,
+            )
+
+            return response.content.strip()
+
+        except Exception as e:
+            logger.warning(f"LLM section generation failed: {e}, using fallback")
+            section = f"Demonstrated strength in {', '.join(themes)}. "
+            for theme in themes[:2]:
+                citations = evidence_map.get_citations(theme)
+                if citations:
+                    section += f"[Supported by: {len(citations)} peer feedback(s)] "
+            return section
 
     async def _generate_summary(
         self,
@@ -632,13 +703,42 @@ class Scribe(Agent):
         theme_clusters: Dict[str, List[str]],
         evidence_map: EvidenceMapping,
     ) -> str:
-        """Generate overall evaluation summary"""
-        summary = f"Based on analysis of {len(peer_feedbacks)} peer reviews"
+        """Generate overall evaluation summary using LLM"""
+        # Build context
+        sources = f"{len(peer_feedbacks)} peer reviews"
         if self_eval:
-            summary += " and self-evaluation"
-        summary += f", identified {len(theme_clusters)} key performance areas. "
-        summary += "Employee demonstrates consistent strength across multiple dimensions."
-        return summary
+            sources += " and self-evaluation"
+
+        theme_areas = list(theme_clusters.keys())
+
+        prompt = f"""Write an executive summary for an employee performance evaluation.
+
+Data analyzed:
+- {sources}
+- {len(theme_areas)} key performance areas identified: {', '.join(theme_areas)}
+
+Write a concise 1-paragraph summary (3-4 sentences) that:
+1. Highlights overall performance
+2. Mentions key strengths
+3. Sets context for detailed sections to follow
+4. Uses professional, objective language
+
+Return ONLY the summary paragraph, no preamble."""
+
+        try:
+            response = await self.llm.generate(
+                prompt=prompt,
+                system="You are an expert at writing executive summaries for employee evaluations.",
+                temperature=0.6,  # Slightly more factual
+            )
+
+            return response.content.strip()
+
+        except Exception as e:
+            logger.warning(f"LLM summary generation failed: {e}, using fallback")
+            summary = f"Based on analysis of {sources}, identified {len(theme_clusters)} key performance areas. "
+            summary += "Employee demonstrates consistent strength across multiple dimensions."
+            return summary
 
     async def _generate_gap_questions(
         self,
@@ -646,9 +746,55 @@ class Scribe(Agent):
         peer_count: int,
         has_self_eval: bool,
     ) -> List[Dict[str, str]]:
-        """Generate questions to fill gaps"""
-        questions = []
+        """Generate clarifying questions to fill gaps using LLM"""
+        # Build context about what we have
+        context = f"""Evaluation coverage:
+- Peer reviews: {peer_count}
+- Self-evaluation: {'Yes' if has_self_eval else 'No'}
+- Sections covered: {', '.join(sections.keys())}
+"""
 
+        prompt = f"""Review this evaluation data coverage and generate 2-4 clarifying questions that would help fill gaps.
+
+{context}
+
+For each question, consider:
+1. What areas lack sufficient evidence?
+2. What would help the manager write a more complete evaluation?
+3. What specific examples or context would be valuable?
+
+Return questions as a JSON array of objects with "question" and "category" fields.
+Example: [{{"question": "...", "category": "technical"}}, ...]
+
+Return ONLY the JSON array, no other text."""
+
+        try:
+            response = await self.llm.generate_structured(
+                prompt=prompt,
+                schema={
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "question": {"type": "string"},
+                            "category": {"type": "string"},
+                        },
+                        "required": ["question", "category"],
+                    },
+                },
+                system="You are an expert at identifying gaps in performance evaluations.",
+                temperature=0.7,
+            )
+
+            # response is already parsed JSON
+            if isinstance(response, list):
+                return response[:5]  # Limit to 5 questions
+
+        except Exception as e:
+            logger.warning(f"LLM question generation failed: {e}, using fallback")
+
+        # Fallback to rule-based questions
+        questions = []
         if peer_count < 3:
             questions.append(
                 {
@@ -656,7 +802,6 @@ class Scribe(Agent):
                     "category": "coverage",
                 }
             )
-
         if "technical" not in sections:
             questions.append(
                 {
@@ -664,5 +809,4 @@ class Scribe(Agent):
                     "category": "technical",
                 }
             )
-
         return questions

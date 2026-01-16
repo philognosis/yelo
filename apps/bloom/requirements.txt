@@ -36,6 +36,7 @@ influxdb-client>=1.39.0  # InfluxDB time series
 # ============================================================================
 anthropic>=0.8.0
 openai>=1.6.0
+google-generativeai>=0.3.0  # Google Gemini
 tiktoken>=0.5.0  # Token counting
 sentence-transformers>=2.2.0  # Embeddings
 
