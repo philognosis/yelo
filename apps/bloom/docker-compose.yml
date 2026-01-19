@@ -107,8 +107,8 @@ services:
   # Bloom API
   api:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..  # Repository root for access to src/iras
+      dockerfile: apps/bloom/Dockerfile
     container_name: bloom-api
     environment:
       # Database connections

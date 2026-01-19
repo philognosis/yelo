@@ -1,7 +1,7 @@
 # Bloom API Dockerfile
 # Production-ready FastAPI backend for Bloom evaluation system
 
-FROM python:3.11-slim
+FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim AS builder
 
 LABEL maintainer="Bloom Team"
 LABEL description="Bloom Employee Evaluation & Growth Engine - API"
@@ -12,8 +12,7 @@ WORKDIR /app
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    UV_SYSTEM_PYTHON=1
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -23,19 +22,41 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy IRAS core dependency
-COPY ../../src/iras /app/iras
+# Copy IRAS framework (from repository root context)
+COPY src/iras /app/iras
+WORKDIR /app/iras
+RUN uv pip install -e .
 
 # Copy Bloom application
-COPY . /app/bloom
+WORKDIR /app
+COPY apps/bloom /app/bloom
 
-# Install Python dependencies
-COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Install Bloom as package
+# Install Bloom dependencies using uv
 WORKDIR /app/bloom
-RUN pip install -e .
+RUN uv pip install -e .
+
+# Production stage
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy installed packages from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy application code
+COPY --from=builder /app/iras /app/iras
+COPY --from=builder /app/bloom /app/bloom
+
+# Set working directory
+WORKDIR /app/bloom
 
 # Create non-root user for security
 RUN useradd -m -u 1000 bloom && \
