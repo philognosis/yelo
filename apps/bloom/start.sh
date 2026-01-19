@@ -10,11 +10,12 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║                                                            ║${NC}"
@@ -45,13 +46,45 @@ else
 fi
 
 # Check if .env file exists
-if [ ! -f .env ]; then
+if [ ! -f "$SCRIPT_DIR/.env" ]; then
     echo -e "${YELLOW}⚠️  Warning: .env file not found${NC}"
     echo "Creating .env from .env.example..."
-    cp .env.example .env
+    cp "$SCRIPT_DIR/.env.example" "$SCRIPT_DIR/.env"
     echo -e "${GREEN}✓ Created .env file${NC}"
-    echo -e "${YELLOW}⚠️  Please edit .env and configure your settings before proceeding${NC}"
+    echo ""
+    echo -e "${YELLOW}⚠️  IMPORTANT: Please configure your .env file before proceeding${NC}"
+    echo -e "${CYAN}Required settings:${NC}"
+    echo "  - At least ONE LLM API key (ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY)"
+    echo "  - LLM_PROVIDER (anthropic, openai, or gemini)"
+    echo ""
+    echo -e "${BLUE}Example minimal configuration:${NC}"
+    echo "  ANTHROPIC_API_KEY=sk-ant-your-key-here"
+    echo "  LLM_PROVIDER=anthropic"
+    echo ""
     read -p "Press Enter to continue after configuring .env, or Ctrl+C to exit..."
+fi
+
+# Validate critical environment variables
+echo -e "${BLUE}[1/6] Validating environment configuration...${NC}"
+
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    source "$SCRIPT_DIR/.env"
+
+    # Check for at least one LLM API key
+    if [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$OPENAI_API_KEY" ] && [ -z "$GEMINI_API_KEY" ]; then
+        echo -e "${RED}❌ Error: No LLM API key found in .env${NC}"
+        echo "Please set at least one of: ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY"
+        exit 1
+    fi
+
+    # Check LLM_PROVIDER is set
+    if [ -z "$LLM_PROVIDER" ]; then
+        echo -e "${YELLOW}⚠️  Warning: LLM_PROVIDER not set, defaulting to 'anthropic'${NC}"
+    fi
+
+    echo -e "${GREEN}✓ Environment configuration valid${NC}"
+else
+    echo -e "${YELLOW}⚠️  Skipping validation (no .env file)${NC}"
 fi
 
 # Parse command line arguments
@@ -90,32 +123,40 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Navigate to Bloom directory (important for docker-compose context)
+cd "$SCRIPT_DIR"
+
 # Pull latest images
-echo -e "${BLUE}[1/5] Pulling Docker images...${NC}"
+echo -e "${BLUE}[2/6] Pulling Docker images...${NC}"
 $DOCKER_COMPOSE pull
 
-# Build application images
-echo -e "${BLUE}[2/5] Building Bloom images...${NC}"
-$DOCKER_COMPOSE build
+# Build application images with proper context
+echo -e "${BLUE}[3/6] Building Bloom images...${NC}"
+echo -e "${CYAN}   Build context: Repository root${NC}"
+echo -e "${CYAN}   This allows access to src/iras from apps/bloom${NC}"
+$DOCKER_COMPOSE build --no-cache
 
 # Create necessary directories
-echo -e "${BLUE}[3/5] Creating directories...${NC}"
+echo -e "${BLUE}[4/6] Creating directories...${NC}"
 mkdir -p uploads logs
+echo -e "${GREEN}✓ Directories created${NC}"
 
 # Start services
-echo -e "${BLUE}[4/5] Starting Bloom services...${NC}"
+echo -e "${BLUE}[5/6] Starting Bloom services...${NC}"
 $DOCKER_COMPOSE up $PROFILE $DETACHED
 
 # Wait for services to be healthy
 if [ -n "$DETACHED" ]; then
-    echo -e "${BLUE}[5/5] Waiting for services to be healthy...${NC}"
+    echo -e "${BLUE}[6/6] Waiting for services to be healthy...${NC}"
 
     RETRY_COUNT=0
     MAX_RETRIES=30
 
+    # Wait for API
+    echo -n "   Checking API health..."
     while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
         if curl -f -s http://localhost:8000/health > /dev/null 2>&1; then
-            echo -e "${GREEN}✓ API is healthy${NC}"
+            echo -e " ${GREEN}✓ API is healthy${NC}"
             break
         fi
         echo -n "."
@@ -124,15 +165,21 @@ if [ -n "$DETACHED" ]; then
     done
 
     if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-        echo -e "${RED}❌ API failed to become healthy${NC}"
-        echo "Check logs with: docker-compose logs api"
+        echo -e " ${RED}❌ API failed to become healthy${NC}"
+        echo ""
+        echo -e "${YELLOW}Troubleshooting:${NC}"
+        echo "  1. Check logs: docker-compose logs api"
+        echo "  2. Verify .env configuration"
+        echo "  3. Ensure LLM API key is valid"
         exit 1
     fi
 
+    # Wait for Dashboard
     RETRY_COUNT=0
+    echo -n "   Checking Dashboard health..."
     while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
         if curl -f -s http://localhost:3000 > /dev/null 2>&1; then
-            echo -e "${GREEN}✓ Dashboard is healthy${NC}"
+            echo -e " ${GREEN}✓ Dashboard is healthy${NC}"
             break
         fi
         echo -n "."
@@ -141,8 +188,11 @@ if [ -n "$DETACHED" ]; then
     done
 
     if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-        echo -e "${RED}❌ Dashboard failed to become healthy${NC}"
-        echo "Check logs with: docker-compose logs dashboard"
+        echo -e " ${RED}❌ Dashboard failed to become healthy${NC}"
+        echo ""
+        echo -e "${YELLOW}Troubleshooting:${NC}"
+        echo "  1. Check logs: docker-compose logs dashboard"
+        echo "  2. Verify API is accessible"
         exit 1
     fi
 fi
@@ -172,10 +222,17 @@ if [[ "$PROFILE" == *"nginx"* ]]; then
 fi
 
 echo ""
+echo -e "${BLUE}Quick Start:${NC}"
+echo -e "  ${CYAN}Run example:${NC}     docker-compose exec api python examples/simple_evaluation.py"
+echo -e "  ${CYAN}View logs:${NC}       docker-compose logs -f"
+echo -e "  ${CYAN}Stop services:${NC}   ./stop.sh"
+echo ""
 echo -e "${BLUE}Useful commands:${NC}"
-echo -e "  View logs:       ${YELLOW}docker-compose logs -f${NC}"
-echo -e "  Stop services:   ${YELLOW}./stop.sh${NC}"
-echo -e "  Restart:         ${YELLOW}docker-compose restart${NC}"
-echo -e "  Shell (API):     ${YELLOW}docker-compose exec api bash${NC}"
+echo -e "  ${CYAN}API shell:${NC}       docker-compose exec api bash"
+echo -e "  ${CYAN}Run tests:${NC}       docker-compose exec api pytest tests/ -v"
+echo -e "  ${CYAN}Restart:${NC}         docker-compose restart"
+echo -e "  ${CYAN}Agent status:${NC}    curl http://localhost:8000/api/v1/swarm/status"
 echo ""
 echo -e "${GREEN}Happy evaluating! 🌸${NC}"
+echo ""
+echo -e "${CYAN}💡 Tip: Check out the docs at apps/bloom/docs/LLM_CONFIGURATION.md${NC}"
