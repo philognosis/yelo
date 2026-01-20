@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '../../components/PageHeader';
-import { MetricsGrid } from '../../components/MetricsGrid';
-import { Card } from '../../components/Card';
-import { Badge } from '../../components/Badge';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
-import { ActivityFeed } from '../../components/ActivityFeed';
-import { EvaluationChart } from '../../components/EvaluationChart';
-import { AlertBanner } from '../../components/AlertBanner';
+import PageHeader from '@/components/PageHeader';
+import MetricsGrid from '@/components/MetricsGrid';
+import Card from '@/components/Card';
+import Badge from '@/components/Badge';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import ActivityFeed from '@/components/ActivityFeed';
+import EvaluationChart from '@/components/EvaluationChart';
+import AlertBanner from '@/components/AlertBanner';
 import Link from 'next/link';
 
 interface SystemMetrics {
@@ -47,7 +47,7 @@ export default function HRDashboardPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -65,19 +65,18 @@ export default function HRDashboardPage() {
 
       {/* System Alerts */}
       {metrics?.alerts && metrics.alerts.length > 0 && (
-        <div className="space-y-3">
-          {metrics.alerts.map((alert, idx) => (
-            <AlertBanner
-              key={idx}
-              type={alert.type as any}
-              message={`${alert.message} (${alert.count})`}
-            />
-          ))}
-        </div>
+        <AlertBanner
+          alerts={metrics.alerts.map((alert, idx) => ({
+            id: `alert-${idx}`,
+            type: alert.type as any,
+            title: alert.message,
+            message: `Count: ${alert.count}`
+          }))}
+        />
       )}
 
       {/* Metrics Overview */}
-      <MetricsGrid role="hr_admin" />
+      <MetricsGrid metrics={[]} />
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Main Content */}
@@ -116,7 +115,7 @@ export default function HRDashboardPage() {
           {/* Recent Activity */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-            <ActivityFeed />
+            <ActivityFeed activities={[]} />
           </Card>
 
           {/* Performance Distribution */}
@@ -167,7 +166,7 @@ export default function HRDashboardPage() {
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               Active Cycles
               {metrics?.active_cycles ? (
-                <Badge variant="info">{metrics.active_cycles}</Badge>
+                <Badge variant="blue">{metrics.active_cycles}</Badge>
               ) : null}
             </h2>
             <Link href="/hr/cycles">
@@ -183,15 +182,15 @@ export default function HRDashboardPage() {
             <div className="space-y-2 text-sm text-green-800">
               <div className="flex justify-between">
                 <span>API Status</span>
-                <Badge variant="success">Healthy</Badge>
+                <Badge variant="blue">Healthy</Badge>
               </div>
               <div className="flex justify-between">
                 <span>AI Services</span>
-                <Badge variant="success">Active</Badge>
+                <Badge variant="blue">Active</Badge>
               </div>
               <div className="flex justify-between">
                 <span>Notifications</span>
-                <Badge variant="success">Running</Badge>
+                <Badge variant="blue">Running</Badge>
               </div>
             </div>
           </Card>

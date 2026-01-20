@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { PageHeader } from '../../../components/PageHeader';
-import { Card } from '../../../components/Card';
-import { Input } from '../../../components/Input';
-import { Select } from '../../../components/Select';
-import { Button } from '../../../components/Button';
-import { AlertBanner } from '../../../components/AlertBanner';
+import PageHeader from '@/components/PageHeader';
+import Card from '@/components/Card';
+import Input from '@/components/Input';
+import Select from '@/components/Select';
+import Button from '@/components/Button';
+import AlertBanner from '@/components/AlertBanner';
 
 export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
@@ -34,7 +34,12 @@ export default function SettingsPage() {
       />
 
       {success && (
-        <AlertBanner type="success" message="Settings saved successfully!" />
+        <AlertBanner alerts={[{
+          id: 'settings-success',
+          type: 'success',
+          title: 'Success',
+          message: 'Settings saved successfully!'
+        }]} />
       )}
 
       {/* General Settings */}
@@ -233,7 +238,7 @@ export default function SettingsPage() {
 
       {/* Actions */}
       <div className="flex gap-3 justify-end">
-        <Button variant="outline">
+        <Button variant="ghost">
           Reset to Defaults
         </Button>
         <Button

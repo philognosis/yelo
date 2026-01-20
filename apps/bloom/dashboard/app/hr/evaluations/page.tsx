@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '../../../components/PageHeader';
-import { Card } from '../../../components/Card';
-import { Badge } from '../../../components/Badge';
-import { Input } from '../../../components/Input';
-import { Select } from '../../../components/Select';
-import { LoadingSpinner } from '../../../components/LoadingSpinner';
+import PageHeader from '@/components/PageHeader';
+import Card from '@/components/Card';
+import Badge from '@/components/Badge';
+import Input from '@/components/Input';
+import Select from '@/components/Select';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import Link from 'next/link';
 
 interface Evaluation {
@@ -54,17 +54,17 @@ export default function AllEvaluationsPage() {
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'completed': return 'success';
-      case 'manager_review': return 'warning';
-      case 'committee_review': return 'info';
-      default: return 'default';
+      case 'completed': return 'green';
+      case 'manager_review': return 'yellow';
+      case 'committee_review': return 'blue';
+      default: return 'gray';
     }
   };
 
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -94,7 +94,7 @@ export default function AllEvaluationsPage() {
           <Select
             label="Status"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(value) => setStatusFilter(String(value))}
             options={[
               { value: 'all', label: 'All Statuses' },
               { value: 'peer_selection', label: 'Peer Selection' },
@@ -108,7 +108,7 @@ export default function AllEvaluationsPage() {
           <Select
             label="Cycle"
             value={cycleFilter}
-            onChange={(e) => setCycleFilter(e.target.value)}
+            onChange={(value) => setCycleFilter(String(value))}
             options={[
               { value: 'all', label: 'All Cycles' },
               { value: 'Q4 2024', label: 'Q4 2024' },

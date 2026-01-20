@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { PageHeader } from '../../../../../components/PageHeader';
-import { Card } from '../../../../../components/Card';
-import { Button } from '../../../../../components/Button';
-import { Badge } from '../../../../../components/Badge';
-import { LoadingSpinner } from '../../../../../components/LoadingSpinner';
-import { AlertBanner } from '../../../../../components/AlertBanner';
-import { RatingSelector } from '../../../../../components/RatingSelector';
+import PageHeader from '@/components/PageHeader';
+import Card from '@/components/Card';
+import Button from '@/components/Button';
+import Badge from '@/components/Badge';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import AlertBanner from '@/components/AlertBanner';
+import RatingSelector from '@/components/RatingSelector';
 
 interface SubmissionPreview {
   id: string;
@@ -43,7 +43,7 @@ export default function SubmitEvaluationPage() {
   useEffect(() => {
     const fetchPreview = async () => {
       try {
-        const response = await fetch(`/api/manager/evaluations/${params.id}/preview`);
+        const response = await fetch(`/api/manager/evaluations/${params?.id || ""}/preview`);
         const data = await response.json();
         setPreview(data);
       } catch (error) {
@@ -55,7 +55,7 @@ export default function SubmitEvaluationPage() {
     };
 
     fetchPreview();
-  }, [params.id]);
+  }, [params?.id]);
 
   const handleSubmit = async () => {
     if (!Object.values(confirmChecks).every(Boolean)) {
@@ -67,14 +67,14 @@ export default function SubmitEvaluationPage() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/manager/evaluations/${params.id}/submit`, {
+      const response = await fetch(`/api/manager/evaluations/${params?.id || ""}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) throw new Error('Failed to submit evaluation');
 
-      router.push(`/manager/evaluations/${params.id}?submitted=true`);
+      router.push(`/manager/evaluations/${params?.id || ""}?submitted=true`);
     } catch (error) {
       setError('Failed to submit evaluation. Please try again.');
     } finally {
@@ -85,7 +85,7 @@ export default function SubmitEvaluationPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -94,7 +94,7 @@ export default function SubmitEvaluationPage() {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-semibold text-gray-900">Preview not available</h2>
-        <Button onClick={() => router.push(`/manager/evaluations/${params.id}/edit`)} className="mt-4">
+        <Button onClick={() => router.push(`/manager/evaluations/${params?.id || ""}/edit`)} className="mt-4">
           Back to Edit
         </Button>
       </div>
@@ -111,18 +111,27 @@ export default function SubmitEvaluationPage() {
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Team Evaluations', href: '/manager' },
-          { label: preview.employee_name, href: `/manager/evaluations/${params.id}` },
-          { label: 'Submit', href: `/manager/evaluations/${params.id}/submit` },
+          { label: preview.employee_name, href: `/manager/evaluations/${params?.id || ""}` },
+          { label: 'Submit', href: `/manager/evaluations/${params?.id || ""}/submit` },
         ]}
       />
 
       <AlertBanner
-        type="warning"
-        message="Please review carefully. Once submitted, this evaluation will be sent to HR and the committee for review."
+        alerts={[{
+          id: 'submit-warning',
+          type: 'warning',
+          title: 'Review Before Submitting',
+          message: 'Please review carefully. Once submitted, this evaluation will be sent to HR and the committee for review.'
+        }]}
       />
 
       {error && (
-        <AlertBanner type="error" message={error} />
+        <AlertBanner alerts={[{
+          id: 'submit-eval-error',
+          type: 'error',
+          title: 'Error',
+          message: error
+        }]} />
       )}
 
       {/* Overall Rating Preview */}
@@ -134,10 +143,10 @@ export default function SubmitEvaluationPage() {
               value={preview.overall_rating}
               onChange={() => {}}
               disabled
-              size="large"
+              size="xl"
             />
           </div>
-          <Badge variant="info" className="text-lg px-4 py-2">
+          <Badge variant="blue" className="text-lg px-4 py-2">
             {preview.overall_rating}/5
           </Badge>
         </div>
@@ -253,14 +262,14 @@ export default function SubmitEvaluationPage() {
       {/* Actions */}
       <div className="flex gap-3 justify-between sticky bottom-0 bg-white p-4 border-t border-gray-200 shadow-lg">
         <Button
-          variant="outline"
-          onClick={() => router.push(`/manager/evaluations/${params.id}/edit`)}
+          variant="ghost"
+          onClick={() => router.push(`/manager/evaluations/${params?.id || ""}/edit`)}
           disabled={isSubmitting}
         >
           ← Back to Edit
         </Button>
         <Button
-          variant="success"
+          variant="primary"
           onClick={handleSubmit}
           isLoading={isSubmitting}
           disabled={!allConfirmed}

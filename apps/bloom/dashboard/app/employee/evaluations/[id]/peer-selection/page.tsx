@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { PageHeader } from '../../../../../components/PageHeader';
-import { PeerSelector } from '../../../../../components/PeerSelector';
-import { Card } from '../../../../../components/Card';
-import { Button } from '../../../../../components/Button';
-import { LoadingSpinner } from '../../../../../components/LoadingSpinner';
-import { AlertBanner } from '../../../../../components/AlertBanner';
+import PageHeader from '@/components/PageHeader';
+import PeerSelector from '@/components/PeerSelector';
+import Card from '@/components/Card';
+import Button from '@/components/Button';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import AlertBanner from '@/components/AlertBanner';
 
 interface Peer {
   id: string;
@@ -32,7 +32,7 @@ export default function PeerSelectionPage() {
   useEffect(() => {
     const fetchPeers = async () => {
       try {
-        const response = await fetch(`/api/employee/evaluations/${params.id}/available-peers`);
+        const response = await fetch(`/api/employee/evaluations/${params?.id || ""}/available-peers`);
         const data = await response.json();
         setAvailablePeers(data.available_peers);
         setSelectedPeers(data.selected_peers || []);
@@ -45,7 +45,7 @@ export default function PeerSelectionPage() {
     };
 
     fetchPeers();
-  }, [params.id]);
+  }, [params?.id]);
 
   const handleSubmit = async () => {
     if (selectedPeers.length < MIN_PEERS) {
@@ -57,7 +57,7 @@ export default function PeerSelectionPage() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/employee/evaluations/${params.id}/peers`, {
+      const response = await fetch(`/api/employee/evaluations/${params?.id || ""}/peers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ peer_ids: selectedPeers }),
@@ -65,7 +65,7 @@ export default function PeerSelectionPage() {
 
       if (!response.ok) throw new Error('Failed to save peer selection');
 
-      router.push(`/employee/evaluations/${params.id}`);
+      router.push(`/employee/evaluations/${params?.id || ""}`);
     } catch (error) {
       setError('Failed to save peer selection. Please try again.');
     } finally {
@@ -76,7 +76,7 @@ export default function PeerSelectionPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -89,18 +89,27 @@ export default function PeerSelectionPage() {
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'My Evaluations', href: '/employee' },
-          { label: 'Evaluation', href: `/employee/evaluations/${params.id}` },
-          { label: 'Peer Selection', href: `/employee/evaluations/${params.id}/peer-selection` },
+          { label: 'Evaluation', href: `/employee/evaluations/${params?.id || ""}` },
+          { label: 'Peer Selection', href: `/employee/evaluations/${params?.id || ""}/peer-selection` },
         ]}
       />
 
       <AlertBanner
-        type="info"
-        message={`Select peers who have worked closely with you and can provide constructive feedback. You need to select between ${MIN_PEERS} and ${MAX_PEERS} peers.`}
+        alerts={[{
+          id: 'peer-selection-info',
+          type: 'info',
+          title: 'Select Peer Reviewers',
+          message: `Select peers who have worked closely with you and can provide constructive feedback. You need to select between ${MIN_PEERS} and ${MAX_PEERS} peers.`
+        }]}
       />
 
       {error && (
-        <AlertBanner type="error" message={error} />
+        <AlertBanner alerts={[{
+          id: 'peer-selection-error',
+          type: 'error',
+          title: 'Error',
+          message: error
+        }]} />
       )}
 
       <Card className="p-6">
@@ -123,8 +132,8 @@ export default function PeerSelectionPage() {
 
         <div className="mt-6 flex gap-3 justify-end">
           <Button
-            variant="outline"
-            onClick={() => router.push(`/employee/evaluations/${params.id}`)}
+            variant="ghost"
+            onClick={() => router.push(`/employee/evaluations/${params?.id || ""}`)}
             disabled={isSaving}
           >
             Cancel

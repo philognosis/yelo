@@ -1,4 +1,4 @@
-// File: /Users/raghuraman/projects/yelo/apps/bloom/dashboard/app/notifications/page.tsx
+// File: /home/user/yelo/apps/bloom/dashboard/app/notifications/page.tsx
 import * as entry from '../../../../app/notifications/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

@@ -1,4 +1,4 @@
-// File: /Users/raghuraman/projects/yelo/apps/bloom/dashboard/app/committee/calibration/page.tsx
+// File: /home/user/yelo/apps/bloom/dashboard/app/committee/calibration/page.tsx
 import * as entry from '../../../../../app/committee/calibration/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

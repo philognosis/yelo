@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '../../components/PageHeader';
-import { EvaluationCard } from '../../components/EvaluationCard';
-import { MetricsGrid } from '../../components/MetricsGrid';
-import { Card } from '../../components/Card';
-import { Badge } from '../../components/Badge';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
-import { EmptyState } from '../../components/EmptyState';
-import { AlertBanner } from '../../components/AlertBanner';
+import PageHeader from '@/components/PageHeader';
+import EvaluationCard from '@/components/EvaluationCard';
+import MetricsGrid from '@/components/MetricsGrid';
+import Card from '@/components/Card';
+import Badge from '@/components/Badge';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import EmptyState from '@/components/EmptyState';
+import AlertBanner from '@/components/AlertBanner';
 import Link from 'next/link';
 
 interface TeamEvaluation {
@@ -60,7 +60,7 @@ export default function ManagerDashboardPage() {
       />
 
       {/* Metrics Overview */}
-      <MetricsGrid role="manager" />
+      <MetricsGrid metrics={[]} />
 
       {/* Alerts */}
       {requiresAttention.length > 0 && (
@@ -72,7 +72,7 @@ export default function ManagerDashboardPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <LoadingSpinner size="large" />
+          <LoadingSpinner size="xl" />
         </div>
       ) : (
         <>
@@ -81,7 +81,7 @@ export default function ManagerDashboardPage() {
             <div>
               <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
                 AI Drafts Ready for Review
-                <Badge variant="info">{draftsReady.length}</Badge>
+                <Badge variant="blue">{draftsReady.length}</Badge>
               </h2>
 
               <div className="grid md:grid-cols-2 gap-4">
@@ -102,7 +102,7 @@ export default function ManagerDashboardPage() {
             <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
               Pending Reviews
               {pendingReviews.length > 0 && (
-                <Badge variant="warning">{pendingReviews.length}</Badge>
+                <Badge variant="purple">{pendingReviews.length}</Badge>
               )}
             </h2>
 
@@ -128,7 +128,7 @@ export default function ManagerDashboardPage() {
             <div>
               <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
                 Completed Reviews
-                <Badge variant="success">{completed.length}</Badge>
+                <Badge variant="blue">{completed.length}</Badge>
               </h2>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { PageHeader } from '../../../../components/PageHeader';
-import { Card } from '../../../../components/Card';
-import { Badge } from '../../../../components/Badge';
-import { Button } from '../../../../components/Button';
-import { LoadingSpinner } from '../../../../components/LoadingSpinner';
-import { EvaluationChart } from '../../../../components/EvaluationChart';
-import { ActivityFeed } from '../../../../components/ActivityFeed';
+import PageHeader from '@/components/PageHeader';
+import Card from '@/components/Card';
+import Badge from '@/components/Badge';
+import Button from '@/components/Button';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import EvaluationChart from '@/components/EvaluationChart';
+import ActivityFeed from '@/components/ActivityFeed';
 
 interface CycleDetail {
   id: string;
@@ -42,7 +42,7 @@ export default function CycleDetailPage() {
   useEffect(() => {
     const fetchCycle = async () => {
       try {
-        const response = await fetch(`/api/hr/cycles/${params.id}`);
+        const response = await fetch(`/api/hr/cycles/${params?.id || ""}`);
         const data = await response.json();
         setCycle(data);
       } catch (error) {
@@ -53,12 +53,12 @@ export default function CycleDetailPage() {
     };
 
     fetchCycle();
-  }, [params.id]);
+  }, [params?.id]);
 
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -83,11 +83,11 @@ export default function CycleDetailPage() {
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'HR Dashboard', href: '/hr' },
           { label: 'Cycles', href: '/hr/cycles' },
-          { label: cycle.name, href: `/hr/cycles/${params.id}` },
+          { label: cycle.name, href: `/hr/cycles/${params?.id || ""}` },
         ]}
-        action={
+        actions={
           <div className="flex gap-3">
-            <Button variant="outline">Edit Cycle</Button>
+            <Button variant="ghost">Edit Cycle</Button>
             <Button variant="secondary">Export Data</Button>
           </div>
         }
@@ -98,7 +98,7 @@ export default function CycleDetailPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold mb-2">Cycle Status</h2>
-            <Badge variant="success" className="text-lg px-4 py-2">
+            <Badge variant="blue" className="text-lg px-4 py-2">
               {cycle.status.toUpperCase()}
             </Badge>
           </div>
@@ -214,14 +214,20 @@ export default function CycleDetailPage() {
           {/* Recent Activity */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-            <ActivityFeed />
+            <ActivityFeed activities={[]} />
           </Card>
 
           {/* Performance Distribution */}
           {cycle.statistics.avg_rating > 0 && (
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4">Performance Distribution</h2>
-              <EvaluationChart data={[3.8, 4.2, 3.9, 4.5, 4.1]} />
+              <EvaluationChart
+                type="bar"
+                data={[3.8, 4.2, 3.9, 4.5, 4.1].map((value, index) => ({
+                  name: `Rating ${index + 1}`,
+                  value: value
+                }))}
+              />
             </Card>
           )}
         </div>
@@ -232,13 +238,13 @@ export default function CycleDetailPage() {
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Actions</h2>
             <div className="space-y-3">
-              <Button variant="primary" fullWidth>
+              <Button variant="primary" className="w-full">
                 Send Reminder
               </Button>
-              <Button variant="secondary" fullWidth>
+              <Button variant="secondary" className="w-full">
                 Download Report
               </Button>
-              <Button variant="outline" fullWidth>
+              <Button variant="ghost" className="w-full">
                 View All Evaluations
               </Button>
             </div>

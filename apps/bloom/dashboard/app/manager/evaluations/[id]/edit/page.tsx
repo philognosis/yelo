@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { PageHeader } from '../../../../../components/PageHeader';
-import { FeedbackForm } from '../../../../../components/FeedbackForm';
-import { RatingSelector } from '../../../../../components/RatingSelector';
-import { Card } from '../../../../../components/Card';
-import { Button } from '../../../../../components/Button';
-import { LoadingSpinner } from '../../../../../components/LoadingSpinner';
-import { AlertBanner } from '../../../../../components/AlertBanner';
-import { Badge } from '../../../../../components/Badge';
+import PageHeader from '@/components/PageHeader';
+import FeedbackForm from '@/components/FeedbackForm';
+import RatingSelector from '@/components/RatingSelector';
+import Card from '@/components/Card';
+import Button from '@/components/Button';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import AlertBanner from '@/components/AlertBanner';
+import Badge from '@/components/Badge';
 
 interface EvaluationData {
   id: string;
@@ -53,8 +53,8 @@ export default function EditEvaluationPage() {
     const fetchEvalData = async () => {
       try {
         const endpoint = fromAIDraft
-          ? `/api/manager/evaluations/${params.id}/ai-draft`
-          : `/api/manager/evaluations/${params.id}/draft`;
+          ? `/api/manager/evaluations/${params?.id || ""}/ai-draft`
+          : `/api/manager/evaluations/${params?.id || ""}/draft`;
 
         const response = await fetch(endpoint);
         const data = await response.json();
@@ -84,7 +84,7 @@ export default function EditEvaluationPage() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/manager/evaluations/${params.id}/draft`, {
+      const response = await fetch(`/api/manager/evaluations/${params?.id || ""}/draft`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -115,13 +115,13 @@ export default function EditEvaluationPage() {
   };
 
   const handleSubmit = () => {
-    router.push(`/manager/evaluations/${params.id}/submit`);
+    router.push(`/manager/evaluations/${params?.id || ""}/submit`);
   };
 
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -147,8 +147,8 @@ export default function EditEvaluationPage() {
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Team Evaluations', href: '/manager' },
-          { label: evalData.employee_name, href: `/manager/evaluations/${params.id}` },
-          { label: 'Edit', href: `/manager/evaluations/${params.id}/edit` },
+          { label: evalData.employee_name, href: `/manager/evaluations/${params?.id || ""}` },
+          { label: 'Edit', href: `/manager/evaluations/${params?.id || ""}/edit` },
         ]}
       />
 
@@ -160,7 +160,12 @@ export default function EditEvaluationPage() {
       )}
 
       {error && (
-        <AlertBanner type="error" message={error} />
+        <AlertBanner alerts={[{
+          id: 'edit-eval-error',
+          type: 'error',
+          title: 'Error',
+          message: error
+        }]} />
       )}
 
       {/* Overall Rating */}
@@ -170,7 +175,7 @@ export default function EditEvaluationPage() {
           <RatingSelector
             value={overallRating}
             onChange={setOverallRating}
-            size="large"
+            size="xl"
           />
           <div className="text-2xl font-bold text-purple-600">
             {overallRating > 0 ? `${overallRating}/5` : 'Not rated'}
@@ -189,7 +194,7 @@ export default function EditEvaluationPage() {
                 <h3 className="text-lg font-semibold">{competency.name}</h3>
                 <p className="text-sm text-gray-600 mt-1">{competency.description}</p>
               </div>
-              <Badge variant="default">{index + 1} of {evalData.competencies.length}</Badge>
+              <Badge variant="gray">{index + 1} of {evalData.competencies.length}</Badge>
             </div>
 
             <FeedbackForm
@@ -222,7 +227,7 @@ export default function EditEvaluationPage() {
               />
               {strengths.length > 1 && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   onClick={() => setStrengths(strengths.filter((_, i) => i !== index))}
                 >
                   Remove
@@ -230,7 +235,7 @@ export default function EditEvaluationPage() {
               )}
             </div>
           ))}
-          <Button variant="outline" onClick={handleAddStrength}>
+          <Button variant="ghost" onClick={handleAddStrength}>
             + Add Strength
           </Button>
         </div>
@@ -255,7 +260,7 @@ export default function EditEvaluationPage() {
               />
               {developmentAreas.length > 1 && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   onClick={() => setDevelopmentAreas(developmentAreas.filter((_, i) => i !== index))}
                 >
                   Remove
@@ -263,7 +268,7 @@ export default function EditEvaluationPage() {
               )}
             </div>
           ))}
-          <Button variant="outline" onClick={handleAddDevelopmentArea}>
+          <Button variant="ghost" onClick={handleAddDevelopmentArea}>
             + Add Development Area
           </Button>
         </div>
@@ -283,8 +288,8 @@ export default function EditEvaluationPage() {
       {/* Actions */}
       <div className="flex gap-3 justify-end sticky bottom-0 bg-white p-4 border-t border-gray-200 shadow-lg">
         <Button
-          variant="outline"
-          onClick={() => router.push(`/manager/evaluations/${params.id}`)}
+          variant="ghost"
+          onClick={() => router.push(`/manager/evaluations/${params?.id || ""}`)}
           disabled={isSaving}
         >
           Cancel

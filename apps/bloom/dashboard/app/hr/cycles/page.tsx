@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '../../../components/PageHeader';
-import { Card } from '../../../components/Card';
-import { Badge } from '../../../components/Badge';
-import { Button } from '../../../components/Button';
-import { LoadingSpinner } from '../../../components/LoadingSpinner';
-import { EmptyState } from '../../../components/EmptyState';
+import PageHeader from '@/components/PageHeader';
+import Card from '@/components/Card';
+import Badge from '@/components/Badge';
+import Button from '@/components/Button';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import EmptyState from '@/components/EmptyState';
 import Link from 'next/link';
 
 interface EvaluationCycle {
@@ -48,17 +48,17 @@ export default function CyclesPage() {
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'active': return 'success';
-      case 'completed': return 'default';
-      case 'draft': return 'warning';
-      default: return 'default';
+      case 'active': return 'green';
+      case 'completed': return 'gray';
+      case 'draft': return 'yellow';
+      default: return 'gray';
     }
   };
 
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -73,7 +73,7 @@ export default function CyclesPage() {
           { label: 'HR Dashboard', href: '/hr' },
           { label: 'Cycles', href: '/hr/cycles' },
         ]}
-        action={
+        actions={
           <Link href="/hr/cycles/new">
             <Button variant="primary">Create New Cycle</Button>
           </Link>
@@ -84,19 +84,19 @@ export default function CyclesPage() {
       <Card className="p-4">
         <div className="flex gap-3">
           <Button
-            variant={filter === 'all' ? 'primary' : 'outline'}
+            variant='ghost'
             onClick={() => setFilter('all')}
           >
             All Cycles
           </Button>
           <Button
-            variant={filter === 'active' ? 'primary' : 'outline'}
+            variant='ghost'
             onClick={() => setFilter('active')}
           >
             Active
           </Button>
           <Button
-            variant={filter === 'completed' ? 'primary' : 'outline'}
+            variant='ghost'
             onClick={() => setFilter('completed')}
           >
             Completed
@@ -109,11 +109,6 @@ export default function CyclesPage() {
         <EmptyState
           title="No cycles found"
           description="Create your first evaluation cycle to get started."
-          action={
-            <Link href="/hr/cycles/new">
-              <Button variant="primary">Create Cycle</Button>
-            </Link>
-          }
         />
       ) : (
         <div className="grid md:grid-cols-2 gap-6">

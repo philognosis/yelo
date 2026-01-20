@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { PageHeader } from '../../../../components/PageHeader';
-import { EvaluationDetail } from '../../../../components/EvaluationDetail';
-import { EvaluationTimeline } from '../../../../components/EvaluationTimeline';
-import { StateIndicator } from '../../../../components/StateIndicator';
-import { Button } from '../../../../components/Button';
-import { Card } from '../../../../components/Card';
-import { Badge } from '../../../../components/Badge';
-import { LoadingSpinner } from '../../../../components/LoadingSpinner';
+import PageHeader from '@/components/PageHeader';
+import EvaluationDetail from '@/components/EvaluationDetail';
+import EvaluationTimeline from '@/components/EvaluationTimeline';
+import StateIndicator from '@/components/StateIndicator';
+import Button from '@/components/Button';
+import Card from '@/components/Card';
+import Badge from '@/components/Badge';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import Link from 'next/link';
 
 interface EvaluationData {
@@ -35,7 +35,7 @@ export default function EmployeeEvaluationDetailPage() {
   useEffect(() => {
     const fetchEvaluation = async () => {
       try {
-        const response = await fetch(`/api/employee/evaluations/${params.id}`);
+        const response = await fetch(`/api/employee/evaluations/${params?.id || ""}`);
         const data = await response.json();
         setEvaluation(data);
       } catch (error) {
@@ -46,12 +46,12 @@ export default function EmployeeEvaluationDetailPage() {
     };
 
     fetchEvaluation();
-  }, [params.id]);
+  }, [params?.id]);
 
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -79,7 +79,7 @@ export default function EmployeeEvaluationDetailPage() {
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'My Evaluations', href: '/employee' },
-          { label: evaluation.cycle_name, href: `/employee/evaluations/${params.id}` },
+          { label: evaluation.cycle_name, href: `/employee/evaluations/${params?.id || ""}` },
         ]}
       />
 
@@ -110,9 +110,9 @@ export default function EmployeeEvaluationDetailPage() {
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-3">
                   {evaluation.progress.peer_selection ? (
-                    <Badge variant="success">✓ Complete</Badge>
+                    <Badge variant="blue">✓ Complete</Badge>
                   ) : (
-                    <Badge variant="warning">Pending</Badge>
+                    <Badge variant="purple">Pending</Badge>
                   )}
                   <div>
                     <div className="font-medium">Select Peer Reviewers</div>
@@ -120,7 +120,7 @@ export default function EmployeeEvaluationDetailPage() {
                   </div>
                 </div>
                 {canSelectPeers && (
-                  <Link href={`/employee/evaluations/${params.id}/peer-selection`}>
+                  <Link href={`/employee/evaluations/${params?.id || ""}/peer-selection`}>
                     <Button variant="primary">Select Peers</Button>
                   </Link>
                 )}
@@ -130,9 +130,9 @@ export default function EmployeeEvaluationDetailPage() {
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-3">
                   {evaluation.progress.self_eval ? (
-                    <Badge variant="success">✓ Complete</Badge>
+                    <Badge variant="blue">✓ Complete</Badge>
                   ) : (
-                    <Badge variant="warning">Pending</Badge>
+                    <Badge variant="purple">Pending</Badge>
                   )}
                   <div>
                     <div className="font-medium">Complete Self-Evaluation</div>
@@ -140,7 +140,7 @@ export default function EmployeeEvaluationDetailPage() {
                   </div>
                 </div>
                 {canSelfEval && (
-                  <Link href={`/employee/evaluations/${params.id}/self-eval`}>
+                  <Link href={`/employee/evaluations/${params?.id || ""}/self-eval`}>
                     <Button variant="primary">
                       {evaluation.progress.self_eval ? 'View' : 'Start'}
                     </Button>
@@ -152,13 +152,13 @@ export default function EmployeeEvaluationDetailPage() {
               {canViewFeedback && (
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <Badge variant="success">✓ Available</Badge>
+                    <Badge variant="blue">✓ Available</Badge>
                     <div>
                       <div className="font-medium">View Final Feedback</div>
                       <div className="text-sm text-gray-600">Review your completed evaluation</div>
                     </div>
                   </div>
-                  <Link href={`/employee/evaluations/${params.id}/feedback`}>
+                  <Link href={`/employee/evaluations/${params?.id || ""}/feedback`}>
                     <Button variant="primary">View Feedback</Button>
                   </Link>
                 </div>
@@ -167,7 +167,25 @@ export default function EmployeeEvaluationDetailPage() {
           </Card>
 
           {/* Evaluation Details */}
-          <EvaluationDetail evaluationId={params.id as string} role="employee" />
+          <EvaluationDetail
+            id={evaluation.id}
+            title={evaluation.cycle_name}
+            period={evaluation.cycle_name}
+            status={evaluation.status === 'completed' ? 'completed' :
+                    evaluation.status === 'not_started' ? 'not_started' :
+                    'in_progress'}
+            currentPhase={evaluation.status}
+            evaluator={{
+              name: 'Manager',
+              role: 'Manager'
+            }}
+            employee={{
+              name: evaluation.employee_name,
+              role: 'Employee'
+            }}
+            dueDate={new Date(evaluation.due_date).toLocaleDateString()}
+            createdDate={new Date(evaluation.due_date).toLocaleDateString()}
+          />
         </div>
 
         {/* Sidebar */}
@@ -175,7 +193,7 @@ export default function EmployeeEvaluationDetailPage() {
           {/* Timeline */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Timeline</h2>
-            <EvaluationTimeline events={evaluation.timeline} />
+            <EvaluationTimeline phases={evaluation.timeline || []} />
           </Card>
 
           {/* Progress */}
@@ -184,19 +202,19 @@ export default function EmployeeEvaluationDetailPage() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm">Peer Selection</span>
-                <Badge variant={evaluation.progress.peer_selection ? 'success' : 'default'}>
+                <Badge variant={evaluation.progress.peer_selection ? 'green' : 'gray'}>
                   {evaluation.progress.peer_selection ? 'Done' : 'Pending'}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Self-Evaluation</span>
-                <Badge variant={evaluation.progress.self_eval ? 'success' : 'default'}>
+                <Badge variant={evaluation.progress.self_eval ? 'green' : 'gray'}>
                   {evaluation.progress.self_eval ? 'Done' : 'Pending'}
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Manager Review</span>
-                <Badge variant={evaluation.progress.manager_review ? 'success' : 'default'}>
+                <Badge variant={evaluation.progress.manager_review ? 'green' : 'gray'}>
                   {evaluation.progress.manager_review ? 'Done' : 'In Progress'}
                 </Badge>
               </div>

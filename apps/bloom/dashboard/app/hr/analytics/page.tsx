@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '../../../components/PageHeader';
-import { Card } from '../../../components/Card';
-import { Select } from '../../../components/Select';
-import { LoadingSpinner } from '../../../components/LoadingSpinner';
-import { EvaluationChart } from '../../../components/EvaluationChart';
+import PageHeader from '@/components/PageHeader';
+import Card from '@/components/Card';
+import Select from '@/components/Select';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import EvaluationChart from '@/components/EvaluationChart';
 
 interface AnalyticsData {
   overview: {
@@ -50,7 +50,7 @@ export default function AnalyticsPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -72,7 +72,7 @@ export default function AnalyticsPage() {
         <Select
           label="Cycle"
           value={cycleFilter}
-          onChange={(e) => setCycleFilter(e.target.value)}
+          onChange={(value) => setCycleFilter(String(value))}
           options={[
             { value: 'current', label: 'Current Cycle' },
             { value: 'q4_2024', label: 'Q4 2024' },
@@ -118,13 +118,25 @@ export default function AnalyticsPage() {
         {/* Rating Distribution */}
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Rating Distribution</h2>
-          <EvaluationChart data={analytics?.rating_distribution || []} />
+          <EvaluationChart
+            type="bar"
+            data={(analytics?.rating_distribution || []).map((value, index) => ({
+              name: `Rating ${index + 1}`,
+              value: value
+            }))}
+          />
         </Card>
 
         {/* Performance Trends */}
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Performance Trends</h2>
-          <EvaluationChart data={analytics?.trends.ratings || []} />
+          <EvaluationChart
+            type="line"
+            data={(analytics?.trends.labels || []).map((label, index) => ({
+              name: label,
+              value: analytics?.trends.ratings[index] || 0
+            }))}
+          />
         </Card>
       </div>
 

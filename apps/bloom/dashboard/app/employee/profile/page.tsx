@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../../contexts/AuthContext';
-import { PageHeader } from '../../../components/PageHeader';
-import { Card } from '../../../components/Card';
-import { Input } from '../../../components/Input';
-import { Select } from '../../../components/Select';
-import { Button } from '../../../components/Button';
-import { LoadingSpinner } from '../../../components/LoadingSpinner';
-import { AlertBanner } from '../../../components/AlertBanner';
+import { useAuth } from '@/hooks/useAuth';
+import PageHeader from '@/components/PageHeader';
+import Card from '@/components/Card';
+import Input from '@/components/Input';
+import Select from '@/components/Select';
+import Button from '@/components/Button';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import AlertBanner from '@/components/AlertBanner';
 
 interface ProfileData {
   name: string;
@@ -29,7 +29,7 @@ interface ProfileData {
 }
 
 export default function EmployeeProfilePage() {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -81,7 +81,7 @@ export default function EmployeeProfilePage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -107,11 +107,21 @@ export default function EmployeeProfilePage() {
       />
 
       {success && (
-        <AlertBanner type="success" message="Profile updated successfully!" />
+        <AlertBanner alerts={[{
+          id: 'profile-success',
+          type: 'success',
+          title: 'Success',
+          message: 'Profile updated successfully!'
+        }]} />
       )}
 
       {error && (
-        <AlertBanner type="error" message={error} />
+        <AlertBanner alerts={[{
+          id: 'profile-error',
+          type: 'error',
+          title: 'Error',
+          message: error
+        }]} />
       )}
 
       {/* Personal Information */}
@@ -172,7 +182,7 @@ export default function EmployeeProfilePage() {
           <Select
             label="Timezone"
             value={profile.timezone}
-            onChange={(e) => setProfile({ ...profile, timezone: e.target.value })}
+            onChange={(value) => setProfile({ ...profile, timezone: String(value) })}
             options={[
               { value: 'America/New_York', label: 'Eastern Time (ET)' },
               { value: 'America/Chicago', label: 'Central Time (CT)' },
@@ -268,7 +278,7 @@ export default function EmployeeProfilePage() {
 
       {/* Actions */}
       <div className="flex gap-3 justify-end">
-        <Button variant="outline">
+        <Button variant="ghost">
           Cancel
         </Button>
         <Button

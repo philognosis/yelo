@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { PageHeader } from '../../components/PageHeader';
-import { Card } from '../../components/Card';
-import { Badge } from '../../components/Badge';
-import { Button } from '../../components/Button';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
-import { EmptyState } from '../../components/EmptyState';
+import { useAuth } from '@/hooks/useAuth';
+import PageHeader from '@/components/PageHeader';
+import Card from '@/components/Card';
+import Badge from '@/components/Badge';
+import Button from '@/components/Button';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import EmptyState from '@/components/EmptyState';
 import Link from 'next/link';
 
 interface Notification {
@@ -89,7 +89,7 @@ export default function NotificationsPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -110,13 +110,13 @@ export default function NotificationsPage() {
         <div className="flex items-center justify-between">
           <div className="flex gap-3">
             <Button
-              variant={filter === 'all' ? 'primary' : 'outline'}
+              variant='ghost'
               onClick={() => setFilter('all')}
             >
               All ({notifications.length})
             </Button>
             <Button
-              variant={filter === 'unread' ? 'primary' : 'outline'}
+              variant='ghost'
               onClick={() => setFilter('unread')}
             >
               Unread ({unreadCount})
@@ -124,7 +124,7 @@ export default function NotificationsPage() {
           </div>
 
           {unreadCount > 0 && (
-            <Button variant="outline" onClick={markAllAsRead}>
+            <Button variant="ghost" onClick={markAllAsRead}>
               Mark All as Read
             </Button>
           )}
@@ -156,7 +156,7 @@ export default function NotificationsPage() {
                       <h3 className="font-semibold text-gray-900 mb-1">
                         {notification.title}
                         {!notification.read && (
-                          <Badge variant="info" className="ml-2">New</Badge>
+                          <Badge variant="blue" className="ml-2">New</Badge>
                         )}
                       </h3>
                       <p className="text-gray-700">{notification.message}</p>
@@ -172,7 +172,7 @@ export default function NotificationsPage() {
                   <div className="flex items-center gap-3 mt-4">
                     {notification.link && (
                       <Link href={notification.link}>
-                        <Button variant="primary" size="small">
+                        <Button variant="primary" size="sm">
                           View Details
                         </Button>
                       </Link>
@@ -180,8 +180,8 @@ export default function NotificationsPage() {
 
                     {!notification.read && (
                       <Button
-                        variant="outline"
-                        size="small"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => markAsRead(notification.id)}
                       >
                         Mark as Read
@@ -202,7 +202,7 @@ export default function NotificationsPage() {
           Manage how you receive notifications in your profile settings.
         </p>
         <Link href={`/${user?.role}/profile`}>
-          <Button variant="outline">
+          <Button variant="ghost">
             Update Preferences
           </Button>
         </Link>

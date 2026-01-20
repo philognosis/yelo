@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { PageHeader } from '../../../../../components/PageHeader';
-import { Card } from '../../../../../components/Card';
-import { Badge } from '../../../../../components/Badge';
-import { Button } from '../../../../../components/Button';
-import { LoadingSpinner } from '../../../../../components/LoadingSpinner';
-import { RatingSelector } from '../../../../../components/RatingSelector';
+import PageHeader from '@/components/PageHeader';
+import Card from '@/components/Card';
+import Badge from '@/components/Badge';
+import Button from '@/components/Button';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import RatingSelector from '@/components/RatingSelector';
 
 interface FeedbackData {
   id: string;
@@ -56,7 +56,7 @@ export default function FeedbackPage() {
   useEffect(() => {
     const fetchFeedback = async () => {
       try {
-        const response = await fetch(`/api/employee/evaluations/${params.id}/feedback`);
+        const response = await fetch(`/api/employee/evaluations/${params?.id || ""}/feedback`);
         const data = await response.json();
         setFeedback(data);
       } catch (error) {
@@ -67,12 +67,12 @@ export default function FeedbackPage() {
     };
 
     fetchFeedback();
-  }, [params.id]);
+  }, [params?.id]);
 
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -96,8 +96,8 @@ export default function FeedbackPage() {
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'My Evaluations', href: '/employee' },
-          { label: 'Evaluation', href: `/employee/evaluations/${params.id}` },
-          { label: 'Feedback', href: `/employee/evaluations/${params.id}/feedback` },
+          { label: 'Evaluation', href: `/employee/evaluations/${params?.id || ""}` },
+          { label: 'Feedback', href: `/employee/evaluations/${params?.id || ""}/feedback` },
         ]}
       />
 
@@ -110,10 +110,10 @@ export default function FeedbackPage() {
               value={feedback.overall_rating}
               onChange={() => {}}
               disabled
-              size="large"
+              size="lg"
             />
           </div>
-          <Badge variant="info" className="text-lg px-4 py-2">
+          <Badge variant="blue" className="text-lg px-4 py-2">
             {feedback.overall_rating.toFixed(1)} / 5.0
           </Badge>
         </div>
@@ -252,7 +252,7 @@ export default function FeedbackPage() {
       {/* Actions */}
       <div className="flex gap-3 justify-between">
         <Button
-          variant="outline"
+          variant="ghost"
           onClick={() => router.push('/employee')}
         >
           Back to Evaluations

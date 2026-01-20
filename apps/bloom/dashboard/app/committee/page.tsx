@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '../../components/PageHeader';
-import { MetricsGrid } from '../../components/MetricsGrid';
-import { Card } from '../../components/Card';
-import { Badge } from '../../components/Badge';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
-import { EmptyState } from '../../components/EmptyState';
+import { CheckCircle } from 'lucide-react';
+import PageHeader from '@/components/PageHeader';
+import MetricsGrid from '@/components/MetricsGrid';
+import Card from '@/components/Card';
+import Badge from '@/components/Badge';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import EmptyState from '@/components/EmptyState';
 import Link from 'next/link';
 
 interface CommitteeItem {
@@ -42,7 +43,6 @@ export default function CommitteeDashboardPage() {
 
   const pendingReviews = items.filter(i => i.calibration_status === 'pending');
   const inProgress = items.filter(i => i.calibration_status === 'in_progress');
-  const completed = items.filter(i => i.calibration_status === 'completed');
   const highPriority = items.filter(i => i.priority === 'high');
 
   return (
@@ -57,11 +57,11 @@ export default function CommitteeDashboardPage() {
       />
 
       {/* Metrics Overview */}
-      <MetricsGrid role="committee" />
+      <MetricsGrid metrics={[]} />
 
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <LoadingSpinner size="large" />
+          <LoadingSpinner size="xl" />
         </div>
       ) : (
         <>
@@ -70,7 +70,7 @@ export default function CommitteeDashboardPage() {
             <div>
               <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
                 High Priority Reviews
-                <Badge variant="error">{highPriority.length}</Badge>
+                <Badge variant="red">{highPriority.length}</Badge>
               </h2>
 
               <div className="grid md:grid-cols-2 gap-4">
@@ -83,14 +83,14 @@ export default function CommitteeDashboardPage() {
                           <p className="text-sm text-gray-600">{item.manager_name} • {item.cycle_name}</p>
                         </div>
                         <div className="flex flex-col items-end gap-2">
-                          <Badge variant="error">High Priority</Badge>
+                          <Badge variant="red">High Priority</Badge>
                           <div className="text-2xl font-bold text-blue-600">
                             {item.manager_rating.toFixed(1)}
                           </div>
                         </div>
                       </div>
                       {item.requires_discussion && (
-                        <Badge variant="warning">Requires Discussion</Badge>
+                        <Badge variant="purple">Requires Discussion</Badge>
                       )}
                     </Card>
                   </Link>
@@ -104,7 +104,7 @@ export default function CommitteeDashboardPage() {
             <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
               Pending Reviews
               {pendingReviews.length > 0 && (
-                <Badge variant="warning">{pendingReviews.length}</Badge>
+                <Badge variant="purple">{pendingReviews.length}</Badge>
               )}
             </h2>
 
@@ -112,7 +112,7 @@ export default function CommitteeDashboardPage() {
               <EmptyState
                 title="No pending reviews"
                 description="All evaluations have been reviewed."
-                icon="✓"
+                icon={CheckCircle}
               />
             ) : (
               <div className="grid md:grid-cols-2 gap-4">
@@ -133,14 +133,14 @@ export default function CommitteeDashboardPage() {
                       </div>
                       <div className="flex gap-2">
                         <Badge variant={
-                          item.priority === 'high' ? 'error' :
-                          item.priority === 'medium' ? 'warning' :
-                          'default'
+                          item.priority === 'high' ? 'red' :
+                          item.priority === 'medium' ? 'yellow' :
+                          'gray'
                         }>
                           {item.priority} priority
                         </Badge>
                         {item.requires_discussion && (
-                          <Badge variant="info">Discussion needed</Badge>
+                          <Badge variant="blue">Discussion needed</Badge>
                         )}
                       </div>
                     </Card>
@@ -155,7 +155,7 @@ export default function CommitteeDashboardPage() {
             <div>
               <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
                 In Progress
-                <Badge variant="info">{inProgress.length}</Badge>
+                <Badge variant="blue">{inProgress.length}</Badge>
               </h2>
 
               <div className="grid md:grid-cols-3 gap-4">
@@ -164,7 +164,7 @@ export default function CommitteeDashboardPage() {
                     <Card className="p-4 hover:shadow-lg transition-shadow">
                       <h3 className="font-semibold mb-1">{item.employee_name}</h3>
                       <p className="text-sm text-gray-600 mb-2">{item.cycle_name}</p>
-                      <Badge variant="info">In Review</Badge>
+                      <Badge variant="blue">In Review</Badge>
                     </Card>
                   </Link>
                 ))}

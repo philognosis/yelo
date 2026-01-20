@@ -1,8 +1,8 @@
 'use client';
 
-import { useAuth } from '../../contexts/AuthContext';
-import { DashboardLayout as Layout } from '../../components/DashboardLayout';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { useAuth } from '@/hooks/useAuth';
+import Layout from '@/components/DashboardLayout';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -27,7 +27,7 @@ export default function DashboardLayout({
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -36,5 +36,12 @@ export default function DashboardLayout({
     return null;
   }
 
-  return <Layout>{children}</Layout>;
+  // Map role to DashboardLayout expected values
+  const roleString = String(user.role);
+  const role: 'employee' | 'manager' | 'admin' =
+    roleString === 'evaluator' ? 'manager' :
+    roleString === 'admin' ? 'admin' :
+    'employee';
+
+  return <Layout userRole={role} userName={user.username || user.email}>{children}</Layout>;
 }

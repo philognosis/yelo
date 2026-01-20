@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '../../components/PageHeader';
-import { EvaluationCard } from '../../components/EvaluationCard';
-import { MetricsGrid } from '../../components/MetricsGrid';
-import { Card } from '../../components/Card';
-import { Badge } from '../../components/Badge';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
-import { EmptyState } from '../../components/EmptyState';
+import PageHeader from '@/components/PageHeader';
+import EvaluationCard from '@/components/EvaluationCard';
+import MetricsGrid from '@/components/MetricsGrid';
+import Card from '@/components/Card';
+import Badge from '@/components/Badge';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import EmptyState from '@/components/EmptyState';
 import Link from 'next/link';
 
 interface Evaluation {
@@ -60,11 +60,11 @@ export default function EmployeeDashboardPage() {
       />
 
       {/* Metrics Overview */}
-      <MetricsGrid role="employee" />
+      <MetricsGrid metrics={[]} />
 
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <LoadingSpinner size="large" />
+          <LoadingSpinner size="xl" />
         </div>
       ) : (
         <>
@@ -73,7 +73,7 @@ export default function EmployeeDashboardPage() {
             <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
               Active Evaluations
               {activeEvaluations.length > 0 && (
-                <Badge variant="info">{activeEvaluations.length}</Badge>
+                <Badge variant="blue">{activeEvaluations.length}</Badge>
               )}
             </h2>
 
@@ -81,13 +81,21 @@ export default function EmployeeDashboardPage() {
               <EmptyState
                 title="No active evaluations"
                 description="You don't have any evaluations in progress right now."
-                icon="📋"
               />
             ) : (
               <div className="grid md:grid-cols-2 gap-4">
                 {activeEvaluations.map((evaluation) => (
                   <Link key={evaluation.id} href={`/employee/evaluations/${evaluation.id}`}>
-                    <EvaluationCard evaluation={evaluation} />
+                    <EvaluationCard
+                      id={evaluation.id}
+                      title={evaluation.cycle_name}
+                      period={evaluation.cycle_name}
+                      dueDate={new Date(evaluation.due_date).toLocaleDateString()}
+                      status={evaluation.status === 'completed' ? 'completed' :
+                              evaluation.status === 'not_started' ? 'not_started' :
+                              'in_progress'}
+                      currentPhase={evaluation.status}
+                    />
                   </Link>
                 ))}
               </div>
@@ -99,13 +107,20 @@ export default function EmployeeDashboardPage() {
             <div>
               <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
                 Completed Evaluations
-                <Badge variant="success">{completedEvaluations.length}</Badge>
+                <Badge variant="blue">{completedEvaluations.length}</Badge>
               </h2>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {completedEvaluations.map((evaluation) => (
                   <Link key={evaluation.id} href={`/employee/evaluations/${evaluation.id}`}>
-                    <EvaluationCard evaluation={evaluation} compact />
+                    <EvaluationCard
+                      id={evaluation.id}
+                      title={evaluation.cycle_name}
+                      period={evaluation.cycle_name}
+                      dueDate={new Date(evaluation.due_date).toLocaleDateString()}
+                      status="completed"
+                      currentPhase={evaluation.status}
+                    />
                   </Link>
                 ))}
               </div>

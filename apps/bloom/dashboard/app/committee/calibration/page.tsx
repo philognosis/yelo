@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '../../../components/PageHeader';
-import { Card } from '../../../components/Card';
-import { Badge } from '../../../components/Badge';
-import { Button } from '../../../components/Button';
-import { LoadingSpinner } from '../../../components/LoadingSpinner';
+import PageHeader from '@/components/PageHeader';
+import Card from '@/components/Card';
+import Badge from '@/components/Badge';
+import Button from '@/components/Button';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import Link from 'next/link';
 
 interface CalibrationSession {
@@ -59,7 +59,7 @@ export default function CalibrationSessionPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -74,7 +74,7 @@ export default function CalibrationSessionPage() {
           { label: 'Committee', href: '/committee' },
           { label: 'Calibration', href: '/committee/calibration' },
         ]}
-        action={
+        actions={
           <Button
             variant="primary"
             onClick={handleStartSession}
@@ -203,7 +203,7 @@ export default function CalibrationSessionPage() {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge variant="default">{evaluation.status}</Badge>
+                    <Badge variant="gray">{evaluation.status}</Badge>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Link

@@ -1,4 +1,4 @@
-// File: /Users/raghuraman/projects/yelo/apps/bloom/dashboard/app/manager/team/page.tsx
+// File: /home/user/yelo/apps/bloom/dashboard/app/manager/team/page.tsx
 import * as entry from '../../../../../app/manager/team/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

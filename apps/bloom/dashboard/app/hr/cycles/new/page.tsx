@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PageHeader } from '../../../../components/PageHeader';
-import { Card } from '../../../../components/Card';
-import { Input } from '../../../../components/Input';
-import { Select } from '../../../../components/Select';
-import { Button } from '../../../../components/Button';
-import { AlertBanner } from '../../../../components/AlertBanner';
+import PageHeader from '@/components/PageHeader';
+import Card from '@/components/Card';
+import Input from '@/components/Input';
+import Select from '@/components/Select';
+import Button from '@/components/Button';
+import AlertBanner from '@/components/AlertBanner';
 
 interface CycleForm {
   name: string;
@@ -73,7 +73,12 @@ export default function NewCyclePage() {
         ]}
       />
 
-      {error && <AlertBanner type="error" message={error} />}
+      {error && <AlertBanner alerts={[{
+        id: 'new-cycle-error',
+        type: 'error',
+        title: 'Error',
+        message: error
+      }]} />}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
@@ -158,7 +163,7 @@ export default function NewCyclePage() {
             <Select
               label="Evaluation Template"
               value={formData.template_id}
-              onChange={(e) => setFormData({ ...formData, template_id: e.target.value })}
+              onChange={(value) => setFormData({ ...formData, template_id: String(value) })}
               options={[
                 { value: '', label: 'Select a template' },
                 { value: 'standard', label: 'Standard Performance Review' },
@@ -226,7 +231,7 @@ export default function NewCyclePage() {
         <div className="flex gap-3 justify-end">
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             onClick={() => router.push('/hr/cycles')}
             disabled={isSubmitting}
           >

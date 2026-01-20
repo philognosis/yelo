@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { PageHeader } from '../../../../components/PageHeader';
-import { Card } from '../../../../components/Card';
-import { Badge } from '../../../../components/Badge';
-import { Button } from '../../../../components/Button';
-import { RatingSelector } from '../../../../components/RatingSelector';
-import { LoadingSpinner } from '../../../../components/LoadingSpinner';
-import { AlertBanner } from '../../../../components/AlertBanner';
+import PageHeader from '@/components/PageHeader';
+import Card from '@/components/Card';
+import Badge from '@/components/Badge';
+import Button from '@/components/Button';
+import RatingSelector from '@/components/RatingSelector';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import AlertBanner from '@/components/AlertBanner';
 
 interface CalibrationReview {
   id: string;
@@ -48,8 +48,13 @@ export default function CalibrationReviewPage() {
 
   useEffect(() => {
     const fetchReview = async () => {
+      if (!params?.id) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const response = await fetch(`/api/committee/calibration/${params.id}`);
+        const response = await fetch(`/api/committee/calibration/${params?.id || ""}`);
         const data = await response.json();
         setReview(data);
         setCalibratedRating(data.manager_rating);
@@ -61,13 +66,15 @@ export default function CalibrationReviewPage() {
     };
 
     fetchReview();
-  }, [params.id]);
+  }, [params?.id]);
 
   const handleApprove = async () => {
+    if (!params?.id) return;
+
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`/api/committee/calibration/${params.id}/approve`, {
+      const response = await fetch(`/api/committee/calibration/${params?.id || ""}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -87,10 +94,12 @@ export default function CalibrationReviewPage() {
   };
 
   const handleRequestChange = async () => {
+    if (!params?.id) return;
+
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`/api/committee/calibration/${params.id}/request-change`, {
+      const response = await fetch(`/api/committee/calibration/${params?.id || ""}/request-change`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -112,7 +121,7 @@ export default function CalibrationReviewPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -140,15 +149,19 @@ export default function CalibrationReviewPage() {
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Committee', href: '/committee' },
           { label: 'Calibration', href: '/committee/calibration' },
-          { label: review.employee_name, href: `/committee/calibration/${params.id}` },
+          { label: review.employee_name, href: `/committee/calibration/${params?.id || ''}` },
         ]}
       />
 
       {/* Suggested Adjustment */}
       {review.suggested_adjustment && (
         <AlertBanner
-          type="warning"
-          message={`AI suggests adjusting rating to ${review.suggested_adjustment.rating.toFixed(1)}: ${review.suggested_adjustment.rationale}`}
+          alerts={[{
+            id: 'suggested-adjustment',
+            type: 'warning',
+            title: 'AI Suggested Adjustment',
+            message: `AI suggests adjusting rating to ${review.suggested_adjustment.rating.toFixed(1)}: ${review.suggested_adjustment.rationale}`
+          }]}
         />
       )}
 
@@ -208,14 +221,14 @@ export default function CalibrationReviewPage() {
           <RatingSelector
             value={calibratedRating}
             onChange={setCalibratedRating}
-            size="large"
+            size="lg"
           />
           <div>
             <div className="text-3xl font-bold text-purple-600">
               {calibratedRating}/5
             </div>
             {significantChange && (
-              <Badge variant="warning" className="mt-2">
+              <Badge variant="yellow" className="mt-2">
                 Significant change from manager rating
               </Badge>
             )}
@@ -233,7 +246,7 @@ export default function CalibrationReviewPage() {
               <div className="flex justify-between items-start mb-2">
                 <h3 className="font-semibold">{comp.name}</h3>
                 <div className="flex items-center gap-2">
-                  <RatingSelector value={comp.rating} onChange={() => {}} disabled size="small" />
+                  <RatingSelector value={comp.rating} onChange={() => {}} disabled size="sm" />
                   <span className="text-sm text-gray-600">{comp.rating}/5</span>
                 </div>
               </div>
@@ -288,7 +301,7 @@ export default function CalibrationReviewPage() {
       {/* Actions */}
       <div className="flex gap-3 justify-between sticky bottom-0 bg-white p-4 border-t border-gray-200 shadow-lg">
         <Button
-          variant="outline"
+          variant="ghost"
           onClick={() => router.push('/committee/calibration')}
           disabled={isSubmitting}
         >
@@ -304,7 +317,7 @@ export default function CalibrationReviewPage() {
             Request Manager Review
           </Button>
           <Button
-            variant="success"
+            variant="primary"
             onClick={handleApprove}
             isLoading={isSubmitting}
           >

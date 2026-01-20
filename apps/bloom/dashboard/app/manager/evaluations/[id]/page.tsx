@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { PageHeader } from '../../../../components/PageHeader';
-import { EvaluationDetail } from '../../../../components/EvaluationDetail';
-import { EvaluationTimeline } from '../../../../components/EvaluationTimeline';
-import { StateIndicator } from '../../../../components/StateIndicator';
-import { Button } from '../../../../components/Button';
-import { Card } from '../../../../components/Card';
-import { Badge } from '../../../../components/Badge';
-import { LoadingSpinner } from '../../../../components/LoadingSpinner';
+import PageHeader from '@/components/PageHeader';
+import EvaluationDetail from '@/components/EvaluationDetail';
+import EvaluationTimeline from '@/components/EvaluationTimeline';
+import StateIndicator from '@/components/StateIndicator';
+import Button from '@/components/Button';
+import Card from '@/components/Card';
+import Badge from '@/components/Badge';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import Link from 'next/link';
 
 interface ManagerEvaluation {
@@ -35,7 +35,7 @@ export default function ManagerEvaluationDetailPage() {
   useEffect(() => {
     const fetchEvaluation = async () => {
       try {
-        const response = await fetch(`/api/manager/evaluations/${params.id}`);
+        const response = await fetch(`/api/manager/evaluations/${params?.id || ""}`);
         const data = await response.json();
         setEvaluation(data);
       } catch (error) {
@@ -46,12 +46,12 @@ export default function ManagerEvaluationDetailPage() {
     };
 
     fetchEvaluation();
-  }, [params.id]);
+  }, [params?.id]);
 
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -79,7 +79,7 @@ export default function ManagerEvaluationDetailPage() {
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Team Evaluations', href: '/manager' },
-          { label: evaluation.employee_name, href: `/manager/evaluations/${params.id}` },
+          { label: evaluation.employee_name, href: `/manager/evaluations/${params?.id || ""}` },
         ]}
       />
 
@@ -90,7 +90,7 @@ export default function ManagerEvaluationDetailPage() {
             <h2 className="text-xl font-semibold mb-2">Evaluation Status</h2>
             <StateIndicator state={evaluation.status} />
             {evaluation.ai_draft_ready && (
-              <Badge variant="info" className="mt-2">AI Draft Available</Badge>
+              <Badge variant="blue" className="mt-2">AI Draft Available</Badge>
             )}
           </div>
           <div className="text-right">
@@ -113,7 +113,7 @@ export default function ManagerEvaluationDetailPage() {
               {canViewDraft && (
                 <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <Badge variant="info">AI</Badge>
+                    <Badge variant="blue">AI</Badge>
                     <div>
                       <div className="font-medium">Review AI-Generated Draft</div>
                       <div className="text-sm text-gray-600">
@@ -121,7 +121,7 @@ export default function ManagerEvaluationDetailPage() {
                       </div>
                     </div>
                   </div>
-                  <Link href={`/manager/evaluations/${params.id}/draft`}>
+                  <Link href={`/manager/evaluations/${params?.id || ""}/draft`}>
                     <Button variant="primary">View Draft</Button>
                   </Link>
                 </div>
@@ -146,7 +146,7 @@ export default function ManagerEvaluationDetailPage() {
                       </div>
                     </div>
                   </div>
-                  <Link href={`/manager/evaluations/${params.id}/edit`}>
+                  <Link href={`/manager/evaluations/${params?.id || ""}/edit`}>
                     <Button variant="primary">
                       {evaluation.has_manager_draft ? 'Edit' : 'Start'}
                     </Button>
@@ -158,7 +158,7 @@ export default function ManagerEvaluationDetailPage() {
               {evaluation.has_manager_draft && (
                 <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <Badge variant="success">Ready</Badge>
+                    <Badge variant="blue">Ready</Badge>
                     <div>
                       <div className="font-medium">Submit for Review</div>
                       <div className="text-sm text-gray-600">
@@ -166,8 +166,8 @@ export default function ManagerEvaluationDetailPage() {
                       </div>
                     </div>
                   </div>
-                  <Link href={`/manager/evaluations/${params.id}/submit`}>
-                    <Button variant="success">Submit</Button>
+                  <Link href={`/manager/evaluations/${params?.id || ""}/submit`}>
+                    <Button variant="primary">Submit</Button>
                   </Link>
                 </div>
               )}
@@ -176,7 +176,7 @@ export default function ManagerEvaluationDetailPage() {
               {isComplete && (
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <Badge variant="success">✓ Complete</Badge>
+                    <Badge variant="blue">✓ Complete</Badge>
                     <div>
                       <div className="font-medium">Evaluation Completed</div>
                       <div className="text-sm text-gray-600">
@@ -184,7 +184,7 @@ export default function ManagerEvaluationDetailPage() {
                       </div>
                     </div>
                   </div>
-                  <Button variant="outline">View Final</Button>
+                  <Button variant="ghost">View Final</Button>
                 </div>
               )}
             </div>
@@ -227,7 +227,7 @@ export default function ManagerEvaluationDetailPage() {
           </Card>
 
           {/* Evaluation Details */}
-          <EvaluationDetail evaluationId={params.id as string} role="manager" />
+          <EvaluationDetail evaluation={params.id as string} role="manager" />
         </div>
 
         {/* Sidebar */}

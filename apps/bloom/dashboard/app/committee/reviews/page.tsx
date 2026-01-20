@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '../../../components/PageHeader';
-import { Card } from '../../../components/Card';
-import { Badge } from '../../../components/Badge';
-import { Input } from '../../../components/Input';
-import { Select } from '../../../components/Select';
-import { LoadingSpinner } from '../../../components/LoadingSpinner';
+import PageHeader from '@/components/PageHeader';
+import Card from '@/components/Card';
+import Badge from '@/components/Badge';
+import Input from '@/components/Input';
+import Select from '@/components/Select';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import Link from 'next/link';
 
 interface CommitteeReview {
@@ -57,26 +57,26 @@ export default function AllReviewsPage() {
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'completed': return 'success';
-      case 'in_progress': return 'info';
-      case 'pending': return 'warning';
-      default: return 'default';
+      case 'completed': return 'green';
+      case 'in_progress': return 'blue';
+      case 'pending': return 'yellow';
+      default: return 'gray';
     }
   };
 
   const getPriorityVariant = (priority: string) => {
     switch (priority) {
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      case 'low': return 'default';
-      default: return 'default';
+      case 'high': return 'red';
+      case 'medium': return 'yellow';
+      case 'low': return 'gray';
+      default: return 'gray';
     }
   };
 
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -106,7 +106,7 @@ export default function AllReviewsPage() {
           <Select
             label="Status"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(value) => setStatusFilter(String(value))}
             options={[
               { value: 'all', label: 'All Statuses' },
               { value: 'pending', label: 'Pending' },
@@ -118,7 +118,7 @@ export default function AllReviewsPage() {
           <Select
             label="Priority"
             value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
+            onChange={(value) => setPriorityFilter(String(value))}
             options={[
               { value: 'all', label: 'All Priorities' },
               { value: 'high', label: 'High' },

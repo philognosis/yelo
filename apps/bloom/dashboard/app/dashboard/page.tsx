@@ -1,12 +1,12 @@
 'use client';
 
-import { useAuth } from '../../contexts/AuthContext';
-import { PageHeader } from '../../components/PageHeader';
-import { MetricsGrid } from '../../components/MetricsGrid';
-import { ActivityFeed } from '../../components/ActivityFeed';
-import { AlertBanner } from '../../components/AlertBanner';
-import { Card } from '../../components/Card';
-import { Button } from '../../components/Button';
+import { useAuth } from '@/hooks/useAuth';
+import PageHeader from '@/components/PageHeader';
+import MetricsGrid from '@/components/MetricsGrid';
+import ActivityFeed from '@/components/ActivityFeed';
+import AlertBanner from '@/components/AlertBanner';
+import Card from '@/components/Card';
+import Button from '@/components/Button';
 import Link from 'next/link';
 
 /**
@@ -41,7 +41,8 @@ export default function DashboardPage() {
     },
   };
 
-  const content = roleSpecificContent[user.role as keyof typeof roleSpecificContent] || roleSpecificContent.employee;
+  const roleKey = String(user.role) as keyof typeof roleSpecificContent;
+  const content = roleSpecificContent[roleKey] || roleSpecificContent.employee;
 
   return (
     <div className="space-y-6">
@@ -52,12 +53,16 @@ export default function DashboardPage() {
 
       {/* Role-specific alerts */}
       <AlertBanner
-        type="info"
-        message="Welcome to Bloom! This is your personalized dashboard."
+        alerts={[{
+          id: 'welcome',
+          type: 'info',
+          title: 'Welcome',
+          message: "Welcome to Bloom! This is your personalized dashboard."
+        }]}
       />
 
       {/* Metrics Overview */}
-      <MetricsGrid role={user.role} />
+      <MetricsGrid metrics={[]} />
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Recent Activity */}
@@ -65,7 +70,7 @@ export default function DashboardPage() {
           <Card>
             <div className="p-6">
               <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-              <ActivityFeed />
+              <ActivityFeed activities={[]} />
             </div>
           </Card>
         </div>
@@ -77,17 +82,17 @@ export default function DashboardPage() {
               <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
               <div className="space-y-3">
                 <Link href={content.cta.href} className="block">
-                  <Button variant="primary" fullWidth>
+                  <Button variant="primary" className="w-full">
                     {content.cta.label}
                   </Button>
                 </Link>
                 <Link href="/notifications" className="block">
-                  <Button variant="secondary" fullWidth>
+                  <Button variant="secondary" className="w-full">
                     View Notifications
                   </Button>
                 </Link>
                 <Link href="/help" className="block">
-                  <Button variant="outline" fullWidth>
+                  <Button variant="ghost" className="w-full">
                     Get Help
                   </Button>
                 </Link>
@@ -102,7 +107,7 @@ export default function DashboardPage() {
               <div className="space-y-2">
                 <div>
                   <span className="text-sm text-gray-600">Name</span>
-                  <p className="font-medium">{user.name}</p>
+                  <p className="font-medium">{user.full_name}</p>
                 </div>
                 <div>
                   <span className="text-sm text-gray-600">Email</span>

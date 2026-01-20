@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { PageHeader } from '../../../../../components/PageHeader';
-import { ManagerDraftView } from '../../../../../components/ManagerDraftView';
-import { ClarifyingQuestions } from '../../../../../components/ClarifyingQuestions';
-import { EvidenceMap } from '../../../../../components/EvidenceMap';
-import { Card } from '../../../../../components/Card';
-import { Button } from '../../../../../components/Button';
-import { Badge } from '../../../../../components/Badge';
-import { LoadingSpinner } from '../../../../../components/LoadingSpinner';
-import { AlertBanner } from '../../../../../components/AlertBanner';
+import PageHeader from '@/components/PageHeader';
+import ManagerDraftView from '@/components/ManagerDraftView';
+import ClarifyingQuestions from '@/components/ClarifyingQuestions';
+import EvidenceMap from '@/components/EvidenceMap';
+import Card from '@/components/Card';
+import Button from '@/components/Button';
+import Badge from '@/components/Badge';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import AlertBanner from '@/components/AlertBanner';
 
 interface AIDraft {
   id: string;
@@ -49,7 +49,7 @@ export default function AIDraftPage() {
   useEffect(() => {
     const fetchDraft = async () => {
       try {
-        const response = await fetch(`/api/manager/evaluations/${params.id}/ai-draft`);
+        const response = await fetch(`/api/manager/evaluations/${params?.id || ""}/ai-draft`);
         const data = await response.json();
         setDraft(data);
       } catch (error) {
@@ -60,21 +60,21 @@ export default function AIDraftPage() {
     };
 
     fetchDraft();
-  }, [params.id]);
+  }, [params?.id]);
 
   const handleAcceptDraft = () => {
     // Navigate to edit page with draft pre-filled
-    router.push(`/manager/evaluations/${params.id}/edit?source=ai-draft`);
+    router.push(`/manager/evaluations/${params?.id || ""}/edit?source=ai-draft`);
   };
 
   const handleStartFromScratch = () => {
-    router.push(`/manager/evaluations/${params.id}/edit`);
+    router.push(`/manager/evaluations/${params?.id || ""}/edit`);
   };
 
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -83,7 +83,7 @@ export default function AIDraftPage() {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-semibold text-gray-900">AI Draft not available</h2>
-        <Button onClick={() => router.push(`/manager/evaluations/${params.id}`)} className="mt-4">
+        <Button onClick={() => router.push(`/manager/evaluations/${params?.id || ""}`)} className="mt-4">
           Back to Evaluation
         </Button>
       </div>
@@ -98,8 +98,8 @@ export default function AIDraftPage() {
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Team Evaluations', href: '/manager' },
-          { label: draft.employee_name, href: `/manager/evaluations/${params.id}` },
-          { label: 'AI Draft', href: `/manager/evaluations/${params.id}/draft` },
+          { label: draft.employee_name, href: `/manager/evaluations/${params?.id || ""}` },
+          { label: 'AI Draft', href: `/manager/evaluations/${params?.id || ""}/draft` },
         ]}
       />
 
@@ -112,7 +112,7 @@ export default function AIDraftPage() {
       <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-semibold">AI-Generated Evaluation</h2>
-          <Badge variant="info">AI Draft</Badge>
+          <Badge variant="blue">AI Draft</Badge>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
@@ -158,14 +158,14 @@ export default function AIDraftPage() {
           {/* Actions */}
           <div className="flex gap-3 justify-end sticky bottom-0 bg-white p-4 border-t border-gray-200 shadow-lg">
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={handleStartFromScratch}
             >
               Start from Scratch
             </Button>
             <Button
               variant="secondary"
-              onClick={() => router.push(`/manager/evaluations/${params.id}`)}
+              onClick={() => router.push(`/manager/evaluations/${params?.id || ""}`)}
             >
               Save for Later
             </Button>

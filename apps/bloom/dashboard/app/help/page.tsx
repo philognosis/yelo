@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { PageHeader } from '../../components/PageHeader';
-import { Card } from '../../components/Card';
-import { Input } from '../../components/Input';
-import { Button } from '../../components/Button';
+import { useAuth } from '@/hooks/useAuth';
+import PageHeader from '@/components/PageHeader';
+import Card from '@/components/Card';
+import Input from '@/components/Input';
+import Button from '@/components/Button';
 
 interface FAQItem {
   question: string;
@@ -129,8 +129,8 @@ export default function HelpPage() {
             </label>
             <div className="flex gap-2 flex-wrap">
               <Button
-                variant={selectedCategory === 'all' ? 'primary' : 'outline'}
-                size="small"
+                variant={selectedCategory === 'all' ? 'primary' : 'ghost'}
+                size="sm"
                 onClick={() => setSelectedCategory('all')}
               >
                 All
@@ -138,8 +138,8 @@ export default function HelpPage() {
               {categories.map(category => (
                 <Button
                   key={category}
-                  variant={selectedCategory === category ? 'primary' : 'outline'}
-                  size="small"
+                  variant={selectedCategory === category ? 'primary' : 'ghost'}
+                  size="sm"
                   onClick={() => setSelectedCategory(category)}
                 >
                   {category}
@@ -260,7 +260,7 @@ export default function HelpPage() {
       </div>
 
       {/* Contact Support */}
-      <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200" id="contact-support">
+      <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
         <h2 className="text-xl font-semibold mb-4">Still Need Help?</h2>
         <p className="text-gray-700 mb-4">
           Our support team is here to assist you with any questions or issues.
@@ -269,7 +269,7 @@ export default function HelpPage() {
           <Button variant="primary">
             Contact Support
           </Button>
-          <Button variant="outline">
+          <Button variant="ghost">
             Report an Issue
           </Button>
         </div>

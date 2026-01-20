@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { PageHeader } from '../../../../../components/PageHeader';
-import { FeedbackForm } from '../../../../../components/FeedbackForm';
-import { Card } from '../../../../../components/Card';
-import { Button } from '../../../../../components/Button';
-import { LoadingSpinner } from '../../../../../components/LoadingSpinner';
-import { AlertBanner } from '../../../../../components/AlertBanner';
+import PageHeader from '@/components/PageHeader';
+import Card from '@/components/Card';
+import Button from '@/components/Button';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import AlertBanner from '@/components/AlertBanner';
 
 interface SelfEvalData {
   id: string;
@@ -39,7 +38,7 @@ export default function SelfEvaluationPage() {
   useEffect(() => {
     const fetchEvalData = async () => {
       try {
-        const response = await fetch(`/api/employee/evaluations/${params.id}/self-eval`);
+        const response = await fetch(`/api/employee/evaluations/${params?.id || ""}/self-eval`);
         const data = await response.json();
         setEvalData(data);
 
@@ -56,14 +55,14 @@ export default function SelfEvaluationPage() {
     };
 
     fetchEvalData();
-  }, [params.id]);
+  }, [params?.id]);
 
   const handleSaveDraft = async () => {
     setIsSaving(true);
     setError(null);
 
     try {
-      const response = await fetch(`/api/employee/evaluations/${params.id}/self-eval/draft`, {
+      const response = await fetch(`/api/employee/evaluations/${params?.id || ""}/self-eval/draft`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ responses, overall_comments: overallComments }),
@@ -82,7 +81,7 @@ export default function SelfEvaluationPage() {
 
   const handleSubmit = async () => {
     // Validate all competencies are rated
-    const allRated = evalData?.competencies.every(c => responses[c.id]?.rating > 0);
+    const allRated = evalData?.competencies.every(c => (responses[c.id]?.rating ?? 0) > 0);
 
     if (!allRated) {
       setError('Please rate all competencies before submitting');
@@ -93,7 +92,7 @@ export default function SelfEvaluationPage() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/employee/evaluations/${params.id}/self-eval`, {
+      const response = await fetch(`/api/employee/evaluations/${params?.id || ""}/self-eval`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ responses, overall_comments: overallComments }),
@@ -101,7 +100,7 @@ export default function SelfEvaluationPage() {
 
       if (!response.ok) throw new Error('Failed to submit evaluation');
 
-      router.push(`/employee/evaluations/${params.id}`);
+      router.push(`/employee/evaluations/${params?.id || ""}`);
     } catch (error) {
       setError('Failed to submit evaluation. Please try again.');
     } finally {
@@ -112,7 +111,7 @@ export default function SelfEvaluationPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -136,18 +135,27 @@ export default function SelfEvaluationPage() {
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'My Evaluations', href: '/employee' },
-          { label: 'Evaluation', href: `/employee/evaluations/${params.id}` },
-          { label: 'Self-Evaluation', href: `/employee/evaluations/${params.id}/self-eval` },
+          { label: 'Evaluation', href: `/employee/evaluations/${params?.id || ""}` },
+          { label: 'Self-Evaluation', href: `/employee/evaluations/${params?.id || ""}/self-eval` },
         ]}
       />
 
       <AlertBanner
-        type="info"
-        message="Take your time to thoughtfully evaluate your performance. Your responses will be reviewed by your manager and used in your final evaluation."
+        alerts={[{
+          id: 'self-eval-info',
+          type: 'info',
+          title: 'Self-Evaluation',
+          message: 'Take your time to thoughtfully evaluate your performance. Your responses will be reviewed by your manager and used in your final evaluation.'
+        }]}
       />
 
       {error && (
-        <AlertBanner type="error" message={error} />
+        <AlertBanner alerts={[{
+          id: 'self-eval-error',
+          type: 'error',
+          title: 'Error',
+          message: error
+        }]} />
       )}
 
       {/* Evaluation Form */}
@@ -157,12 +165,52 @@ export default function SelfEvaluationPage() {
             <h3 className="text-lg font-semibold mb-2">{competency.name}</h3>
             <p className="text-sm text-gray-600 mb-4">{competency.description}</p>
 
-            <FeedbackForm
-              competencyId={competency.id}
-              value={responses[competency.id] || { rating: 0, comments: '' }}
-              onChange={(value) => setResponses({ ...responses, [competency.id]: value })}
-              showRating
-            />
+            <div className="space-y-4">
+              {/* Rating */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Rating (1-5)
+                </label>
+                <select
+                  value={responses[competency.id]?.rating || 0}
+                  onChange={(e) => setResponses({
+                    ...responses,
+                    [competency.id]: {
+                      ...responses[competency.id],
+                      rating: parseInt(e.target.value),
+                      comments: responses[competency.id]?.comments || ''
+                    }
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value={0}>Select a rating</option>
+                  <option value={1}>1 - Needs Improvement</option>
+                  <option value={2}>2 - Below Expectations</option>
+                  <option value={3}>3 - Meets Expectations</option>
+                  <option value={4}>4 - Exceeds Expectations</option>
+                  <option value={5}>5 - Outstanding</option>
+                </select>
+              </div>
+
+              {/* Comments */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Comments
+                </label>
+                <textarea
+                  value={responses[competency.id]?.comments || ''}
+                  onChange={(e) => setResponses({
+                    ...responses,
+                    [competency.id]: {
+                      rating: responses[competency.id]?.rating || 0,
+                      comments: e.target.value
+                    }
+                  })}
+                  placeholder="Provide details about your self-assessment..."
+                  className="w-full min-h-[100px] p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
           </Card>
         ))}
 
@@ -180,8 +228,8 @@ export default function SelfEvaluationPage() {
         {/* Actions */}
         <div className="flex gap-3 justify-end sticky bottom-0 bg-white p-4 border-t border-gray-200 shadow-lg">
           <Button
-            variant="outline"
-            onClick={() => router.push(`/employee/evaluations/${params.id}`)}
+            variant="ghost"
+            onClick={() => router.push(`/employee/evaluations/${params?.id || ""}`)}
             disabled={isSaving}
           >
             Cancel

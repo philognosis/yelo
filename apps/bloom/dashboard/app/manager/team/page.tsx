@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PageHeader } from '../../../components/PageHeader';
-import { Card } from '../../../components/Card';
-import { Badge } from '../../../components/Badge';
-import { LoadingSpinner } from '../../../components/LoadingSpinner';
-import { EvaluationChart } from '../../../components/EvaluationChart';
+import PageHeader from '@/components/PageHeader';
+import Card from '@/components/Card';
+import Badge from '@/components/Badge';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import EvaluationChart from '@/components/EvaluationChart';
 import Link from 'next/link';
 
 interface TeamMember {
@@ -44,7 +44,7 @@ export default function TeamOverviewPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="xl" />
       </div>
     );
   }
@@ -108,7 +108,7 @@ export default function TeamOverviewPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
                     <h3 className="text-lg font-semibold">{member.name}</h3>
-                    <Badge variant="default">{member.role}</Badge>
+                    <Badge variant="gray">{member.role}</Badge>
                     <Badge
                       variant={
                         member.current_evaluation.status === 'completed' ? 'success' :
