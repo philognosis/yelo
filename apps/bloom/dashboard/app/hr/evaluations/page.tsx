@@ -42,12 +42,12 @@ export default function AllEvaluationsPage() {
     fetchEvaluations();
   }, []);
 
-  const filteredEvaluations = evaluations.filter(eval => {
+  const filteredEvaluations = evaluations.filter(evaluation => {
     const matchesSearch =
-      eval.employee_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      eval.manager_name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || eval.status === statusFilter;
-    const matchesCycle = cycleFilter === 'all' || eval.cycle_name === cycleFilter;
+      evaluation.employee_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      evaluation.manager_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || evaluation.status === statusFilter;
+    const matchesCycle = cycleFilter === 'all' || evaluation.cycle_name === cycleFilter;
 
     return matchesSearch && matchesStatus && matchesCycle;
   });

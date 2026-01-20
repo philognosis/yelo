@@ -25,6 +25,9 @@ RUN apt-get update && apt-get install -y \
 # Copy IRAS framework (from repository root context)
 COPY src/iras /app/iras
 WORKDIR /app/iras
+
+RUN touch README.md
+
 RUN uv pip install -e .
 
 # Copy Bloom application
