@@ -11,6 +11,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,8 +28,8 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(email, 'demo-password');
-      router.push('/');
+      await login({ email, password: password || 'demo-password' });
+      router.push('/dashboard');
     } catch (err) {
       setError('Login failed. Please try again.');
     } finally {
@@ -41,8 +42,8 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      await login(demoEmail, 'demo-password');
-      router.push('/');
+      await login({ email: demoEmail, password: 'demo-password' });
+      router.push('/dashboard');
     } catch (err) {
       setError('Demo login failed. Please try again.');
     } finally {
@@ -77,6 +78,8 @@ export default function LoginPage() {
               <Input
                 label="Password"
                 type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
                 disabled={isLoading}
@@ -91,7 +94,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 variant="primary"
-                fullWidth
+                className="w-full"
                 isLoading={isLoading}
               >
                 Sign In

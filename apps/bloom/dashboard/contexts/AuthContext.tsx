@@ -17,6 +17,12 @@ import {
   isTokenExpiringSoon,
   getRefreshToken,
 } from '@/lib/auth';
+import {
+  mockLogin,
+  mockLogout,
+  mockGetCurrentUser,
+  shouldUseMockAuth,
+} from '@/lib/mock-auth';
 
 /**
  * Authentication Context State
@@ -75,9 +81,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           // Fetch fresh user data in background
           try {
-            const response = await apiClient.getCurrentUser();
-            if (response.success && response.data) {
-              setUser(response.data as User);
+            if (shouldUseMockAuth()) {
+              const token = getAuthToken();
+              if (token) {
+                const userData = await mockGetCurrentUser(token);
+                setUser(userData);
+              }
+            } else {
+              const response = await apiClient.getCurrentUser();
+              if (response.success && response.data) {
+                setUser(response.data as User);
+              }
             }
           } catch (err) {
             console.error('Failed to refresh user data:', err);
@@ -101,13 +115,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setError(null);
 
     try {
-      const response = await apiClient.login(credentials.email, credentials.password);
+      let authData: AuthResponse;
 
-      if (!response.success || !response.data) {
-        throw new Error(response.error?.message || 'Login failed');
+      // Use mock auth if no backend is available
+      if (shouldUseMockAuth()) {
+        authData = await mockLogin(credentials.email, credentials.password);
+      } else {
+        const response = await apiClient.login(credentials.email, credentials.password);
+
+        if (!response.success || !response.data) {
+          throw new Error(response.error?.message || 'Login failed');
+        }
+
+        authData = response.data as AuthResponse;
       }
-
-      const authData = response.data as AuthResponse;
 
       // Store auth data
       storeAuth(authData.token, authData.user);
@@ -131,10 +152,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setError(null);
 
     try {
-      // Call logout API (don't throw on error)
-      await apiClient.logout().catch((err) => {
-        console.error('Logout API call failed:', err);
-      });
+      // Call logout API or mock logout (don't throw on error)
+      if (shouldUseMockAuth()) {
+        await mockLogout().catch((err) => {
+          console.error('Mock logout failed:', err);
+        });
+      } else {
+        await apiClient.logout().catch((err) => {
+          console.error('Logout API call failed:', err);
+        });
+      }
     } finally {
       // Clear auth data regardless of API call result
       clearAuth();
@@ -152,27 +179,40 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     try {
-      const response = await apiClient.getCurrentUser();
+      let userData: User;
 
-      if (response.success && response.data) {
-        const userData = response.data as User;
-        setUser(userData);
-
-        // Update stored user
+      if (shouldUseMockAuth()) {
         const token = getAuthToken();
-        const refreshToken = getRefreshToken();
-        if (token) {
-          storeAuth(
-            {
-              access_token: token,
-              token_type: 'Bearer',
-              expires_in: 3600,
-              refresh_token: refreshToken || undefined,
-              issued_at: Date.now(),
-            },
-            userData
-          );
+        if (!token) {
+          return;
         }
+        userData = await mockGetCurrentUser(token);
+      } else {
+        const response = await apiClient.getCurrentUser();
+
+        if (!response.success || !response.data) {
+          return;
+        }
+
+        userData = response.data as User;
+      }
+
+      setUser(userData);
+
+      // Update stored user
+      const token = getAuthToken();
+      const refreshToken = getRefreshToken();
+      if (token) {
+        storeAuth(
+          {
+            access_token: token,
+            token_type: 'Bearer',
+            expires_in: 3600,
+            refresh_token: refreshToken || undefined,
+            issued_at: Date.now(),
+          },
+          userData
+        );
       }
     } catch (err) {
       console.error('Failed to refresh user:', err);
