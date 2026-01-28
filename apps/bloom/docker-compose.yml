@@ -1,14 +1,14 @@
 services:
   # PostgreSQL Database (for DocumentStore in production)
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16
     container_name: bloom-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-bloom}
       POSTGRES_USER: ${POSTGRES_USER:-bloom}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bloom_password}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - app_postgres_data:/var/lib/postgresql/data
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
@@ -258,7 +258,7 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
+  app_postgres_data:
     driver: local
   redis_data:
     driver: local
