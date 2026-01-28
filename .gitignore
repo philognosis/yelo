@@ -63,3 +63,8 @@ docker-compose.override.yml
 # Temporary files
 *.tmp
 *.bak
+
+# Next.js
+.next/
+node_modules/
+.turbo/
