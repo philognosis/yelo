@@ -90,6 +90,7 @@ fi
 # Parse command line arguments
 PROFILE=""
 DETACHED="-d"
+BUILD_CACHE="--build"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -105,6 +106,10 @@ while [[ $# -gt 0 ]]; do
             DETACHED=""
             shift
             ;;
+        --no-cache)
+            BUILD_CACHE="--build --no-cache"
+            shift
+            ;;
         --help)
             echo "Usage: $0 [OPTIONS]"
             echo ""
@@ -112,6 +117,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --full         Start with all optional services (Neo4j, InfluxDB)"
             echo "  --nginx        Start with Nginx reverse proxy"
             echo "  --fg           Run in foreground (don't detach)"
+            echo "  --no-cache     Force rebuild without Docker cache (slower)"
             echo "  --help         Show this help message"
             exit 0
             ;;
@@ -134,7 +140,10 @@ $DOCKER_COMPOSE pull
 echo -e "${BLUE}[3/6] Building Bloom images...${NC}"
 echo -e "${CYAN}   Build context: Repository root${NC}"
 echo -e "${CYAN}   This allows access to src/iras from apps/bloom${NC}"
-$DOCKER_COMPOSE build --no-cache
+if [[ "$BUILD_CACHE" == *"--no-cache"* ]]; then
+    echo -e "${YELLOW}   Building without cache (this will take longer)...${NC}"
+fi
+DOCKER_BUILDKIT=1 COMPOSE_DOCKER_CLI_BUILD=1 $DOCKER_COMPOSE $BUILD_CACHE
 
 # Create necessary directories
 echo -e "${BLUE}[4/6] Creating directories...${NC}"

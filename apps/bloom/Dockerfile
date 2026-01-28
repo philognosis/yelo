@@ -1,6 +1,8 @@
 # Bloom API Dockerfile
 # Production-ready FastAPI backend for Bloom evaluation system
+# Optimized for fast rebuilds with layer caching and uv sync
 
+# syntax=docker/dockerfile:1.4
 FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim AS builder
 
 LABEL maintainer="Bloom Team"
@@ -12,59 +14,86 @@ WORKDIR /app
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    UV_SYSTEM_PYTHON=1
+    UV_SYSTEM_PYTHON=1 \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install system dependencies (minimal set)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     git \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy IRAS framework (from repository root context)
-COPY src/iras /app/iras
+# ============================================================================
+# LAYER 1: Install IRAS framework dependencies
+# ============================================================================
 WORKDIR /app/iras
 
+# Copy only dependency files first for better caching
+COPY src/iras/pyproject.toml ./
 RUN touch README.md
 
-RUN uv pip install -e .
+# Install IRAS dependencies using uv sync for faster builds
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install -e .
 
-# Copy Bloom application
-WORKDIR /app
+# ============================================================================
+# LAYER 2: Install Bloom dependencies
+# ============================================================================
+WORKDIR /app/bloom
+
+# Copy Bloom dependency files
+COPY apps/bloom/pyproject.toml ./
+
+# Generate or copy lock file if it exists
+RUN --mount=type=cache,target=/root/.cache/uv \
+    if [ -f "uv.lock" ]; then \
+        uv sync --frozen --no-dev; \
+    else \
+        uv pip install -e .; \
+    fi
+
+# ============================================================================
+# LAYER 3: Copy application code (changes frequently, so done last)
+# ============================================================================
+# Copy IRAS source code
+COPY src/iras /app/iras
+
+# Copy Bloom application code
 COPY apps/bloom /app/bloom
 
-# Install Bloom dependencies using uv
-WORKDIR /app/bloom
-RUN uv pip install -e .
-
-# Production stage
-FROM python:3.11-slim
+# ============================================================================
+# Production stage - minimal, security-hardened
+# ============================================================================
+FROM python:3.11-slim AS production
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/home/bloom/.local/bin:$PATH"
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
+# Install minimal runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-
-# Copy application code
-COPY --from=builder /app/iras /app/iras
-COPY --from=builder /app/bloom /app/bloom
+# Create non-root user early (before copying files)
+RUN useradd -m -u 1000 bloom
 
 # Set working directory
 WORKDIR /app/bloom
 
-# Create non-root user for security
-RUN useradd -m -u 1000 bloom && \
-    chown -R bloom:bloom /app
+# Copy installed packages from builder (as root, then chown once)
+COPY --from=builder --chown=bloom:bloom /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder --chown=bloom:bloom /usr/local/bin /usr/local/bin
 
+# Copy application code (already owned by bloom user)
+COPY --from=builder --chown=bloom:bloom /app/iras /app/iras
+COPY --from=builder --chown=bloom:bloom /app/bloom /app/bloom
+
+# Switch to non-root user
 USER bloom
 
 # Expose API port

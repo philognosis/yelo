@@ -1,6 +1,8 @@
 # Bloom Dashboard Dockerfile
 # Production-ready Next.js frontend for Bloom evaluation system
+# Optimized for fast rebuilds with layer caching
 
+# syntax=docker/dockerfile:1.4
 FROM node:20-alpine AS base
 
 # Install dependencies only when needed
@@ -8,9 +10,12 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy package files
+# Copy package files (leverage layer caching)
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production
+
+# Use cache mount for npm cache
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --only=production
 
 # Rebuild the source code only when needed
 FROM base AS builder
